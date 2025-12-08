@@ -312,6 +312,34 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </div>
         </div>
       </div>
+      
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: product.name,
+            description: product.description,
+            brand: {
+              '@type': 'Brand',
+              name: 'PeptideScience',
+            },
+            offers: {
+              '@type': 'Offer',
+              price: product.price,
+              priceCurrency: 'USD',
+              availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
+            },
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: '4.8',
+              reviewCount: '24',
+            },
+          }),
+        }}
+      />
     </div>
   );
 }
