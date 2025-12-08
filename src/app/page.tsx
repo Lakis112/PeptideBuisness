@@ -1,8 +1,32 @@
-import { Beaker, Shield, Check, Thermometer, ArrowRight } from 'lucide-react';
+'use client';
+
+import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Beaker, Shield, Check, Thermometer, ArrowRight, X } from 'lucide-react';
 import ProductCard from './components/ProductCard';
 import { products } from '@/lib/products';
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams?.get('search') || '';
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  // Filter products based on category AND search
+  const filteredProducts = products.filter(product => {
+    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const matchesSearch = !searchQuery || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesCategory && matchesSearch;
+  });
+
+  const showSearchResults = searchQuery && searchQuery.length > 0;
+
+  const clearSearch = () => {
+    window.location.href = '/';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Header */}
@@ -13,8 +37,8 @@ export default function Home() {
         </h1>
       </div>
 
-      {/* Hero Section - IMPROVED */}
-      <div className="max-w-7xl mx-auto mb-16 px-8">
+      {/* Hero Section */}
+      <div className="max-w-7xl mx-auto mb-12 px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column */}
           <div>
@@ -91,69 +115,156 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Featured Products - IMPROVED */}
+      {/* Category Filters */}
+      <div className="max-w-7xl mx-auto mb-8 px-8">
+        <div className="flex flex-wrap justify-center gap-2">
+          <button 
+            onClick={() => setSelectedCategory('all')}
+            className={`px-5 py-2 rounded-full font-medium transition-all ${selectedCategory === 'all' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            All Peptides
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Weight Loss')}
+            className={`px-5 py-2 rounded-full font-medium transition-all ${selectedCategory === 'Weight Loss' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            Weight Loss
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Recovery')}
+            className={`px-5 py-2 rounded-full font-medium transition-all ${selectedCategory === 'Recovery' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            Recovery
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Growth Hormone')}
+            className={`px-5 py-2 rounded-full font-medium transition-all ${selectedCategory === 'Growth Hormone' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            Growth Hormone
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Cognitive')}
+            className={`px-5 py-2 rounded-full font-medium transition-all ${selectedCategory === 'Cognitive' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            Cognitive
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Skin/Anti-Aging')}
+            className={`px-5 py-2 rounded-full font-medium transition-all ${selectedCategory === 'Skin/Anti-Aging' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            Skin & Anti-Aging
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Sexual Health')}
+            className={`px-5 py-2 rounded-full font-medium transition-all ${selectedCategory === 'Sexual Health' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            Sexual Health
+          </button>
+        </div>
+        
+        {/* Search & Filter info */}
+        <div className="text-center mt-4 space-y-2">
+          {showSearchResults && (
+            <div className="flex items-center justify-center gap-2">
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full">
+                <span>Search results for: "{searchQuery}"</span>
+                <button 
+                  onClick={clearSearch}
+                  className="hover:bg-blue-100 p-1 rounded-full"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="text-sm text-gray-600">
+            Showing {filteredProducts.length} of {products.length} research peptides
+            {selectedCategory !== 'all' && ` in ${selectedCategory}`}
+          </div>
+        </div>
+      </div>
+
+      {/* Featured Products */}
       <div className="max-w-7xl mx-auto mb-20 px-8">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <div className="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-medium mb-4">
             🔬 Research Compounds
           </div>
-          <h2 className="text-4xl font-bold mb-6">
+          <h2 className="text-3xl font-bold mb-4">
             Premium <span className="text-blue-600">Peptide Selection</span>
           </h2>
-          <p className="text-gray-600 text-lg max-w-3xl mx-auto">
+          <p className="text-gray-600 max-w-3xl mx-auto">
             High-purity amino acid chains for laboratory research. 
             Each peptide undergoes rigorous quality control and third-party verification.
           </p>
         </div>
         
-        {/* Category Filters */}
-        <div className="flex flex-wrap justify-center gap-3 mb-10">
-          <button className="px-6 py-2 bg-blue-600 text-white rounded-full font-medium">
-            All Peptides
-          </button>
-          <button className="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-full font-medium">
-            Recovery Peptides
-          </button>
-          <button className="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-full font-medium">
-            Growth Factors
-          </button>
-          <button className="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-full font-medium">
-            Cognitive Enhancers
-          </button>
-        </div>
-        
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {products.map((product) => (
-            <ProductCard 
-              key={product.id}
-              {...product}
-            />
-          ))}
-        </div>
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-5xl mb-4">🧪</div>
+            <h3 className="text-xl font-bold mb-2">No peptides found</h3>
+            <p className="text-gray-600 mb-6">
+              {showSearchResults 
+                ? `No results for "${searchQuery}". Try a different search term.`
+                : `No peptides in ${selectedCategory} category. Try selecting "All Peptides".`
+              }
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button 
+                onClick={() => setSelectedCategory('all')}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg"
+              >
+                Show All Peptides
+              </button>
+              {showSearchResults && (
+                <button 
+                  onClick={clearSearch}
+                  className="px-6 py-2 border border-gray-300 rounded-lg"
+                >
+                  Clear Search
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => (
+              <ProductCard 
+                key={product.id}
+                {...product}
+              />
+            ))}
+          </div>
+        )}
         
         {/* View All Button */}
-        <div className="text-center mt-12">
-          <button className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl">
-            <span>View All 12+ Research Peptides</span>
-            <ArrowRight className="h-5 w-5" />
-          </button>
-        </div>
+        {selectedCategory !== 'all' && !showSearchResults && (
+          <div className="text-center mt-8">
+            <button 
+              onClick={() => setSelectedCategory('all')}
+              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+            >
+              <span>Show all {products.length} peptides</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Why Choose Us Section */}
-      <div className="bg-gradient-to-b from-gray-50 to-white py-20">
+      <div className="bg-gradient-to-b from-gray-50 to-white py-16">
         <div className="max-w-6xl mx-auto px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-6">
               Why Researchers Choose <span className="text-blue-600">PeptideScience</span>
             </h2>
-            <p className="text-gray-600 text-lg max-w-3xl mx-auto">
+            <p className="text-gray-600 max-w-3xl mx-auto">
               We maintain the highest standards for research compound quality and reliability.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {[
               {
                 icon: '🧪',
@@ -186,10 +297,10 @@ export default function Home() {
                 description: 'Access to scientific team for research questions'
               }
             ].map((feature, index) => (
-              <div key={index} className="bg-white p-8 rounded-2xl border hover:shadow-xl transition-shadow">
-                <div className="text-4xl mb-6">{feature.icon}</div>
-                <h3 className="text-xl font-bold mb-4">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+              <div key={index} className="bg-white p-6 rounded-xl border hover:shadow-lg transition-shadow">
+                <div className="text-3xl mb-4">{feature.icon}</div>
+                <h3 className="text-lg font-bold mb-3">{feature.title}</h3>
+                <p className="text-gray-600 text-sm">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -198,44 +309,44 @@ export default function Home() {
 
       {/* Research Disclaimer */}
       <div className="bg-gradient-to-r from-red-50 to-orange-50 border-t border-b border-red-200">
-        <div className="max-w-7xl mx-auto px-8 py-12">
-          <div className="flex flex-col md:flex-row items-center gap-8">
+        <div className="max-w-7xl mx-auto px-8 py-10">
+          <div className="flex flex-col md:flex-row items-start gap-8">
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-red-800 mb-4">
+              <h3 className="text-xl font-bold text-red-800 mb-4">
                 ⚠️ Important Research Notice
               </h3>
-              <div className="space-y-3 text-red-700">
-                <p className="flex items-start gap-3">
+              <div className="space-y-2 text-red-700 text-sm">
+                <p className="flex items-start gap-2">
                   <span className="font-bold">•</span>
                   <span>All products are sold as research chemicals for laboratory use only</span>
                 </p>
-                <p className="flex items-start gap-3">
+                <p className="flex items-start gap-2">
                   <span className="font-bold">•</span>
                   <span>Not for human consumption, diagnostic, or therapeutic use</span>
                 </p>
-                <p className="flex items-start gap-3">
+                <p className="flex items-start gap-2">
                   <span className="font-bold">•</span>
                   <span>Must be 18+ to purchase. By ordering, you confirm understanding of intended research use</span>
                 </p>
-                <p className="flex items-start gap-3">
+                <p className="flex items-start gap-2">
                   <span className="font-bold">•</span>
                   <span>Consult with qualified professionals for research protocols</span>
                 </p>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-red-300">
-              <h4 className="font-bold mb-3">📋 Research Compliance</h4>
-              <ul className="space-y-2 text-sm">
+            <div className="bg-white p-5 rounded-lg border border-red-300">
+              <h4 className="font-bold mb-3 text-sm">📋 Research Compliance</h4>
+              <ul className="space-y-1.5 text-xs">
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-3 w-3 text-green-600" />
                   <span>IEC/IRB approval documentation available</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-3 w-3 text-green-600" />
                   <span>Material Safety Data Sheets (MSDS)</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-3 w-3 text-green-600" />
                   <span>Export compliance documentation</span>
                 </li>
               </ul>
