@@ -430,6 +430,7 @@ export const products = [
     subcategory: 'Reconstitution',
     dosage: '3ml per vial',
     quantity: '10 vials',
+    purity: '=100%' ,
     storage: 'Room Temperature',
     inStock: true,
   },
