@@ -20,10 +20,10 @@ export default function Home() {
           <span className="font-medium">99% Purity Guaranteed</span>
         </div>
         
-        <h2 className="text-5xl font-bold mb-6">
-          Research-Grade
-          <span className="text-blue-600"> Peptides</span>
-        </h2>
+       <h2 className="text-5xl font-bold mb-6">
+  		Premium Research-Grade
+  		<span className="text-blue-600"> Peptides</span>
+	</h2>
         
         <p className="text-gray-600 text-lg mb-8">
           Laboratory-tested amino acid chains for scientific research. 
