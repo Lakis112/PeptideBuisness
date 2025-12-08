@@ -1,0 +1,38 @@
+export const products = [
+  {
+    id: '1',
+    name: 'BPC-157',
+    description: 'Body Protection Compound-157 for tissue repair research',
+    price: 49.99,
+    category: 'Peptides',
+    purity: '99%',
+    inStock: true,
+  },
+  {
+    id: '2',
+    name: 'TB-500',
+    description: 'Thymosin Beta-4 for muscle recovery research',
+    price: 79.99,
+    category: 'Peptides',
+    purity: '99%',
+    inStock: true,
+  },
+  {
+    id: '3',
+    name: 'CJC-1295',
+    description: 'Growth hormone secretagogue research peptide',
+    price: 89.99,
+    category: 'Peptides',
+    purity: '98.5%',
+    inStock: true,
+  },
+  {
+    id: '4',
+    name: 'Ipamorelin',
+    description: 'Selective growth hormone releasing peptide',
+    price: 69.99,
+    category: 'Peptides',
+    purity: '99%',
+    inStock: true,
+  },
+];
