@@ -304,17 +304,6 @@ function HomeContent() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-12 px-4">
-        <div className="container mx-auto text-center">
-          <p className="text-lg mb-4">Peptide Research Supply</p>
-          <p className="text-gray-400">For research use only. Not for human consumption.</p>
-          <div className="mt-8 text-gray-400 text-sm">
-            <p>© 2024 Peptide Research Supply. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }
