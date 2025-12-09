@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from './components/Navbar';
-import ProductCard from '@/app/components/ProductCard';
+import ProductCard from '@components/ProductCard';
 import { products } from '@/lib/products';
 
 function HomeContent() {

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { products } from '@/lib/products';
-import ProductDetail from '../../../components/ProductDetail';
-import RelatedProducts from '../../../components/RelatedProducts';
+import ProductDetail from '@components/ProductDetail';  // ← USE ALIAS
+import RelatedProducts from '@components/RelatedProducts';  // ← USE ALIAS
 
 interface ProductPageProps {
   params: Promise<{

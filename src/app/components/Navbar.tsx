@@ -74,13 +74,13 @@ export default function Navbar() {
               {isProductsOpen && (
                 <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
                   <Link 
-                    href="/products" 
-                    className="block px-4 py-3 text-sm text-gray-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors"
-                    onClick={() => setIsProductsOpen(false)}
-                  >
-                    <div className="font-medium">All Products</div>
-                    <div className="text-xs text-gray-500 mt-1">Complete pharmaceutical catalog</div>
-                  </Link>
+  href="/products" 
+  className="block px-4 py-3 text-sm text-gray-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors"
+  onClick={() => setIsProductsOpen(false)} // Use setIsProductsOpen, not setIsMenuOpen
+>
+  <div className="font-medium">All Products</div>
+  <div className="text-xs text-gray-500 mt-1">Complete pharmaceutical catalog</div>
+</Link>
                   <div className="border-t border-gray-100 my-2"></div>
                   <Link 
                     href="/products/category/glp-1" 
