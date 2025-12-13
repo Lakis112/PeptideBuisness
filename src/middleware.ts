@@ -6,10 +6,14 @@ export function middleware(request: NextRequest) {
     
     // Public paths - FIXED LOGIC
     const isPublicPath = pathname === '/' || 
-                         pathname === '/login' || 
-                         pathname === '/register' ||
-                         pathname.startsWith('/login/') ||
-                         pathname.startsWith('/register/');
+                     pathname === '/login' || 
+                     pathname === '/register' ||
+                     pathname === '/contact' ||      // Add other public pages you have
+                     pathname === '/quality' ||
+                     pathname === '/research' ||
+                     pathname === '/protocols' ||
+                     pathname.startsWith('/api/') || // API routes are typically public
+                     pathname.startsWith('/products'); // Shop/product pages are public
     
     console.log('=== MIDDLEWARE ===');
     console.log('Path:', pathname);
@@ -23,11 +27,11 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
     
-    // If already logged in and trying to access login/register
-    if (token && isPublicPath) {
-        console.log('✅ Has token, redirecting to dashboard');
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
+// If already logged in and trying to access login/register
+if (token && (pathname === '/login' || pathname === '/register')) {
+    console.log('✅ Has token, redirecting from auth page to dashboard');
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+}
     
     console.log('✅ Allowing request through');
     return NextResponse.next();
