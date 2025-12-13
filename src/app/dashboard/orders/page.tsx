@@ -56,8 +56,8 @@ export default function OrdersPage() {
   const filteredOrders = orders.filter(order => {
     const matchesFilter = filter === 'all' || order.status === filter;
     const matchesSearch = !search || 
-      order.order_number.toLowerCase().includes(search.toLowerCase()) ||
-      order.items.some(item => item.name.toLowerCase().includes(search.toLowerCase()));
+  order.order_number.toLowerCase().includes(search.toLowerCase()) ||
+  (order.items && order.items.some(item => item.name.toLowerCase().includes(search.toLowerCase())));
     return matchesFilter && matchesSearch;
   });
 
@@ -163,7 +163,7 @@ export default function OrdersPage() {
                 
                 <div className="text-right">
                   <div className="text-2xl font-bold text-gray-900 mb-1">
-                    ${order.total.toFixed(2)}
+                    ${Number(order.total).toFixed(2)}
                   </div>
                   <p className="text-sm text-gray-600">
                     {order.items.length} item{order.items.length !== 1 ? 's' : ''}
@@ -185,10 +185,10 @@ export default function OrdersPage() {
                       </div>
                       <div className="text-right">
                         <div className="font-medium">
-                          {item.quantity} × ${item.price.toFixed(2)}
+                          {item.quantity} × ${Number(item.price).toFixed(2)}
                         </div>
                         <div className="text-sm text-gray-600">
-                          Total: ${(item.quantity * item.price).toFixed(2)}
+                          Total: ${(item.quantity * Number(item.price)).toFixed(2)}
                         </div>
                       </div>
                     </div>

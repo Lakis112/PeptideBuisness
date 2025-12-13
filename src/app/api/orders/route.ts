@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
           ) VALUES ($1, $2, $3, $4, $5, $6)`,
           [
             orderId,
-            item.id,
+            String(item.id),  // Convert to string
             item.name,
             item.quantity,
             item.price,
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Optional: GET endpoint to fetch user's orders for dashboard
+// GET endpoint to fetch user's orders for dashboard
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
@@ -143,6 +143,7 @@ export async function GET(request: NextRequest) {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: number };
     
+    // Fetch orders
     const ordersResult = await pool.query(
       `SELECT id, order_number, status, total, created_at 
        FROM orders 
@@ -152,12 +153,29 @@ export async function GET(request: NextRequest) {
       [decoded.id]
     );
 
+    // Fetch items for each order
+    const ordersWithItems = await Promise.all(
+      ordersResult.rows.map(async (order) => {
+        const itemsResult = await pool.query(
+          `SELECT product_name as name, quantity, unit_price as price 
+           FROM order_items 
+           WHERE order_id = $1`,
+          [order.id]
+        );
+        return {
+          ...order,
+          items: itemsResult.rows || []
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      orders: ordersResult.rows
+      orders: ordersWithItems
     });
 
   } catch (error: any) {
+    console.error('❌ Fetch orders error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch orders' },
       { status: 500 }

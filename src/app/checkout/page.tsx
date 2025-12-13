@@ -47,9 +47,11 @@ export default function CheckoutPage() {
       alert('You must agree to the terms and conditions');
       return;
     }
+    localStorage.setItem('lastOrderEmail', formData.email);
 
     setLoading(true);
-    
+
+    localStorage.setItem('lastOrderEmail', formData.email);  
     try {
       // Prepare order data - use formData.email
       const orderData = {
