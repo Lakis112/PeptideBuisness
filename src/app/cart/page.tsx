@@ -1,12 +1,41 @@
 'use client';
 
-import { ShoppingCart, Trash2, Plus, Minus, Shield, Truck, Lock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShoppingCart, Trash2, Plus, Minus, Shield, Truck, Lock, AlertCircle } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function CartPage() {
   const { items, total, addItem, removeItem, updateQuantity, clearCart } = useCart();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/me');
+      const data = await response.json();
+      setIsAuthenticated(!!data.user);
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+        <div className="text-center">
+          <ShoppingCart className="h-12 w-12 text-blue-600 animate-pulse mx-auto mb-4" />
+          <p className="text-gray-600">Loading your research cart...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -46,6 +75,39 @@ export default function CartPage() {
             Review your selected pharmaceutical-grade peptides
           </p>
         </div>
+
+        {/* Guest Warning */}
+        {!isAuthenticated && (
+          <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-2xl p-6 mb-8 max-w-4xl mx-auto">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="h-6 w-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-yellow-800 text-lg mb-1">Guest Research Session</p>
+                <p className="text-yellow-700 mb-3">
+                  Your cart is saved locally to this device. 
+                  <Link href="/login" className="font-semibold ml-1 hover:underline text-yellow-900">
+                    Login or create a research account
+                  </Link> 
+                  {' '}to save your cart across devices and access order history.
+                </p>
+                <div className="flex gap-4 mt-4">
+                  <Link 
+                    href="/login"
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all"
+                  >
+                    Login to Account
+                  </Link>
+                  <Link 
+                    href="/register"
+                    className="bg-gradient-to-r from-gray-800 to-gray-900 text-white px-5 py-2.5 rounded-lg font-medium hover:from-gray-900 hover:to-black transition-all"
+                  >
+                    Create Account
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Cart Items - Left Column */}
@@ -103,15 +165,15 @@ export default function CartPage() {
                       </div>
                       
                       <div className="text-gray-600">
-                        <span className="font-medium">${item.price.toFixed(2)}</span>
-                        <span className="text-sm"> / unit</span>
-                      </div>
+                      <span className="font-medium">${(item.price || 0).toFixed(2)}</span>
+  <span className="text-sm"> / unit</span>
+</div>
                     </div>
 
                     <div className="text-right">
                       <div className="text-2xl font-bold text-gray-900 mb-1">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </div>
+  ${((item.price || 0) * item.quantity).toFixed(2)}
+</div>
                       <button 
                         onClick={() => removeItem(item.id)}
                         className="text-sm text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
@@ -207,13 +269,30 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                {/* CTA Button */}
-                <Link 
-                  href="/checkout"
-                  className="block w-full bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-800 hover:to-indigo-900 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 text-center mb-6"
-                >
-                  Proceed to Secure Checkout
-                </Link>
+                {/* CTA Buttons */}
+                {isAuthenticated ? (
+                  <Link 
+                    href="/checkout"
+                    className="block w-full bg-gradient-to-r from-green-600 to-emerald-700 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-800 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 text-center mb-6"
+                  >
+                    Proceed to Secure Checkout
+                  </Link>
+                ) : (
+                  <div className="space-y-4 mb-6">
+                    <Link 
+                      href="/checkout"
+                      className="block w-full bg-gradient-to-r from-green-600 to-emerald-700 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-800 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 text-center"
+                    >
+                      Checkout as Guest
+                    </Link>
+                    <Link
+                      href="/login"
+                      className="block w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all text-center"
+                    >
+                      Login for Faster Checkout
+                    </Link>
+                  </div>
+                )}
 
                 {/* Continue Shopping */}
                 <div className="text-center">

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -32,6 +33,9 @@ export default function LoginPage() {
         console.log('📦 Response data:', data);
         
         if (response.ok) {
+	    // ADD THIS - Sync cart after login
+            const { syncCart } = (await import('@/lib/cart')).useCart.getState();
+            await syncCart();
             console.log('✅ Login successful! Redirecting...');
             
             // OPTION 1: Force full page reload (most reliable)

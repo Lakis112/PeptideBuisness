@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -57,6 +58,9 @@ export default function RegisterPage() {
             const data = await response.json();
             
             if (response.ok) {
+		// ADD THIS - Initialize cart for new user
+  		const { syncCart } = (await import('@/lib/cart')).useCart.getState();
+  		await syncCart();
                 router.push('/dashboard');
 		toast.success('Account created successfully!');
             } else {
