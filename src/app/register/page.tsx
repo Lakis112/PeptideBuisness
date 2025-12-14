@@ -58,6 +58,7 @@ export default function RegisterPage() {
             
             if (response.ok) {
                 router.push('/dashboard');
+		toast.success('Account created successfully!');
             } else {
                 setError(data.error || 'Registration failed');
             }

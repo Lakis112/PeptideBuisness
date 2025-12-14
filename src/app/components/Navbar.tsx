@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
 import { useCart } from '@/lib/cart';
-import SearchBar from './SearchBar';  // ← ADD THIS IMPORT
+import SearchBar from './SearchBar';
+import UserMenu from './UserMenu'; // <-- ADD THIS IMPORT
 
 export default function Navbar() {
   const { items } = useCart();
@@ -122,10 +123,15 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          {/* Right Section: Search & Cart */}
+          {/* Right Section: Search, User, Cart */}
           <div className="flex items-center gap-3">
             {/* Search Bar */}
             <SearchBar variant="navbar" placeholder="Search peptides..." />
+            
+            {/* User Menu */}
+            <div className="hidden lg:block">
+              <UserMenu />
+            </div>
             
             {/* Cart Button */}
             <Link 
@@ -194,6 +200,13 @@ export default function Navbar() {
               >
                 Contact
               </Link>
+
+              {/* Mobile User Menu & Auth */}
+              <div className="px-4 pt-2 border-t border-gray-100">
+                <div className="lg:hidden">
+                  <UserMenu />
+                </div>
+              </div>
               
               {/* Mobile Search */}
               <div className="px-4 pt-2">

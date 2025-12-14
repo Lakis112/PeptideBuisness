@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner'; // Add at top of file
+
 import { 
   ShoppingCart, 
   Check, 
@@ -45,7 +47,10 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       name: product.name, 
       price: product.price 
     });
-    alert(`Added ${product.name} to cart!`);
+    toast.success('Added to cart', {
+    description: `${name} has been added to your cart.`,
+    icon: '🛒',
+});
   };
 
   return (

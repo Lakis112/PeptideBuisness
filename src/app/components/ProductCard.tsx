@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { ShoppingCart, FlaskRound as Flask, CheckCircle, Award, BarChart3, FileText } from 'lucide-react';
 import { useCart } from '@/lib/cart';
+import { toast } from 'sonner'; // Add at top of file
 
 interface ProductCardProps {
   id: string;
@@ -44,7 +45,10 @@ export default function ProductCard({
 
   const handleAddToCart = () => {
     addItem({ id, name, price });
-    alert(`Added ${name} to cart!`);
+    toast.success('Added to cart', {
+    description: `${name} has been added to your cart.`,
+    icon: '🛒',
+});
   };
 
   // Calculate purity color based on percentage

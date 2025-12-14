@@ -39,12 +39,12 @@ export default function CheckoutPage() {
   const handleCheckout = async () => {
     // Use formData.email instead of email
     if (!formData.email || !formData.firstName || !formData.address) {
-      alert('Please fill in all required shipping information');
+      toast.error('Please fill in all required shipping information');
       return;
     }
     
     if (!agreeToTerms) {
-      alert('You must agree to the terms and conditions');
+      toast.error('You must agree to the terms and conditions');
       return;
     }
     localStorage.setItem('lastOrderEmail', formData.email);
@@ -83,16 +83,22 @@ export default function CheckoutPage() {
       
       if (response.ok) {
         // Use formData.email in success message too
-        alert(`Order confirmed! Order #${result.order.orderNumber}. Confirmation sent to ${formData.email}`);
+        toast.success(`Order confirmed! Order #${result.order.orderNumber}. Confirmation sent to ${formData.email}`);
         clearCart();
         router.push(`/order-success?order=${result.order.orderNumber}`);
       } else {
-        alert(`Order failed: ${result.error}`);
+        toast.error('Order Failed', {
+        description: result.error || 'There was an issue with your order.',
+        duration: 5000,
+});
       }
       
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Payment processing failed. Please try again.');
+      toast.error('Payment Processing Failed', {
+      description: 'Please try again or contact support.',
+      duration: 5000,
+});
     } finally {
       setLoading(false);
     }

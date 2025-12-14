@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from '@components/Navbar';
 import Footer from '@components/Footer';
+import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://mmn-pharma.com'), // REPLACE WITH YOUR DOMAIN
+  metadataBase: new URL('https://mmn-pharma.com'),
   alternates: {
     canonical: '/',
   },
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
     siteName: 'MMN Pharmaceuticals',
     images: [
       {
-        url: '/og-image.jpg', // ADD THIS IMAGE TO public/
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'MMN Pharmaceuticals - Pharma Grade Peptides',
@@ -54,7 +55,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'MMN Pharmaceuticals | EU-GMP Pharma Grade Peptides',
     description: 'Pharmaceutical-grade peptides manufactured under EU-GMP standards.',
-    images: ['/twitter-image.jpg'], // ADD THIS IMAGE TO public/
+    images: ['/twitter-image.jpg'],
     creator: '@mmn_pharma',
   },
   robots: {
@@ -68,10 +69,7 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  verification: {
-    // google: 'your-google-verification-code', // ADD WHEN YOU HAVE IT
-    // yandex: 'your-yandex-verification-code',
-  },
+  verification: {},
 };
 
 export default function RootLayout({
@@ -92,6 +90,13 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <Toaster 
+          position="top-right"
+          expand={false}
+          richColors
+          closeButton
+          duration={4000}
+        />
       </body>
     </html>
   );
