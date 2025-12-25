@@ -1,6 +1,5 @@
-import { products, categories } from '@/lib/products';
 import ProductCard from '@components/ProductCard';
-import { Filter, Grid, List } from 'lucide-react';
+import { Filter, Grid } from 'lucide-react';
 
 export const metadata = {
   title: 'Product Catalog | Pharmaceutical Grade Peptides',
@@ -8,31 +7,76 @@ export const metadata = {
 };
 
 interface ProductsPageProps {
-  searchParams: Promise<{  // ← ADD "Promise" here
+  searchParams: Promise<{
     category?: string;
     search?: string;
   }>;
 }
 
+async function getProducts() {
+  try {
+    const response = await fetch('http://localhost:3000/api/products', {
+      next: { revalidate: 60 }
+    });
+    
+    if (!response.ok) return [];
+    const data = await response.json();
+    
+    // Convert all prices from string to number
+    return data.map((product: any) => ({
+      ...product,
+      price: typeof product.price === 'string' ? parseFloat(product.price) : (product.price || 0),
+      originalPrice: product.originalPrice 
+        ? (typeof product.originalPrice === 'string' 
+          ? parseFloat(product.originalPrice) 
+          : product.originalPrice)
+        : undefined,
+      // Ensure other fields have defaults
+      dosage: product.dosage || 'Research',
+      quantity: product.quantity || '1 vial',
+      purity: product.purity || '99%',
+      inStock: product.inStock !== undefined ? product.inStock : (product.stock > 0)
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
-  // Await the searchParams Promise
   const params = await searchParams;
   const selectedCategory = params?.category || 'all';
   const searchQuery = params?.search || '';
   
+  const products = await getProducts();
+  
+  // Extract unique categories and count products in each
+  const categories = Array.from(
+    new Set(products.map((product: any) => product.category))
+  )
+    .filter(Boolean)
+    .map(category => ({
+      id: category,
+      name: category,
+      count: products.filter((p: any) => p.category === category).length
+    }));
+
   // Filter products
-  const filteredProducts = products.filter(product => {
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+  const filteredProducts = products.filter((product: any) => {
+    const productName = product.name || '';
+    const productDescription = product.description || '';
+    const productCategory = product.category || '';
+    
+    const matchesCategory = selectedCategory === 'all' || productCategory === selectedCategory;
     const matchesSearch = !searchQuery || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+      productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      productDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      productCategory.toLowerCase().includes(searchQuery.toLowerCase());
     
     return matchesCategory && matchesSearch;
   });
   
   // Get featured products for the sidebar
-  const featuredProducts = products.filter(p => p.featured).slice(0, 3);
+  const featuredProducts = products.filter((p: any) => p.isFeatured || p.featured).slice(0, 3);
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -68,7 +112,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 {categories.map((category) => (
                   <a 
                     key={category.id}
-                    href={`/products?category=${category.name}`}
+                    href={`/products?category=${encodeURIComponent(category.name)}`}
                     className={`block px-4 py-2 rounded-lg transition ${selectedCategory === category.name ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
                   >
                     {category.name}
@@ -83,10 +127,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               <div className="bg-white rounded-xl border p-6">
                 <h3 className="text-lg font-bold mb-4">Featured Products</h3>
                 <div className="space-y-4">
-                  {featuredProducts.map((product) => (
+                  {featuredProducts.map((product: any) => (
                     <a 
                       key={product.id}
-                      href={`/products/${product.slug}`}
+                      href={`/products/${product.sku}`}
                       className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition"
                     >
                       <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center">
@@ -140,7 +184,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 </p>
               </div>
               
-              {/* Sorting (you can implement later) */}
+              {/* Sorting */}
               <div className="mt-4 sm:mt-0">
                 <button className="flex items-center gap-2 px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50">
                   <Grid className="h-4 w-4" />
@@ -152,8 +196,21 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             {/* Product Grid */}
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
+                {filteredProducts.map((product: any) => (
+                  <ProductCard 
+                    key={product.id} 
+                    {...{
+                      ...product,
+                      // Ensure all required props are passed
+                      dosage: product.dosage || 'Research',
+                      quantity: product.quantity || '1 vial',
+                      purity: product.purity || '99%',
+                      molecularWeight: product.molecularWeight || '',
+                      sequence: product.sequence || '',
+                      inStock: product.inStock !== undefined ? product.inStock : true,
+                      isFeatured: product.isFeatured || false
+                    }}
+                  />
                 ))}
               </div>
             ) : (

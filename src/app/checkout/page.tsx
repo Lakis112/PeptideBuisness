@@ -5,6 +5,7 @@ import { useCart } from '@/lib/cart';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 type CheckoutStep = 'shipping' | 'payment' | 'review';
 

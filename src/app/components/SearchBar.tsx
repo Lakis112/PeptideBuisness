@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Search, X, ArrowRight } from 'lucide-react';
-import { products } from '@/lib/products';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -11,12 +10,45 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  sku: string;
+  dosage?: string;
+  purity?: string;
+}
+
 export default function SearchBar({ variant = 'navbar', placeholder = 'Search products...' }: SearchBarProps) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<typeof products>([]);
+  const [results, setResults] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Fetch all products on component mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/products');
+        if (response.ok) {
+          const data = await response.json();
+          setAllProducts(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Filter products based on query
   useEffect(() => {
@@ -25,19 +57,19 @@ export default function SearchBar({ variant = 'navbar', placeholder = 'Search pr
       return;
     }
 
-    const filtered = products.filter(product => {
+    const filtered = allProducts.filter(product => {
       const searchTerm = query.toLowerCase();
       return (
         product.name.toLowerCase().includes(searchTerm) ||
-        product.description.toLowerCase().includes(searchTerm) ||
+        (product.description && product.description.toLowerCase().includes(searchTerm)) ||
         product.category.toLowerCase().includes(searchTerm) ||
-        (product.sequence && product.sequence.toLowerCase().includes(searchTerm))
+        product.sku.toLowerCase().includes(searchTerm)
       );
     }).slice(0, 5); // Limit to 5 results for dropdown
 
     setResults(filtered);
     setIsOpen(filtered.length > 0);
-  }, [query]);
+  }, [query, allProducts]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -59,10 +91,10 @@ export default function SearchBar({ variant = 'navbar', placeholder = 'Search pr
     }
   };
 
-  const handleResultClick = (productSlug: string) => {
+  const handleResultClick = (productSku: string) => {
     setQuery('');
     setIsOpen(false);
-    router.push(`/products/${productSlug}`);
+    router.push(`/products/${productSku}`);
   };
 
   const clearSearch = () => {
@@ -134,7 +166,7 @@ export default function SearchBar({ variant = 'navbar', placeholder = 'Search pr
               {results.map((product) => (
                 <div
                   key={product.id}
-                  onClick={() => handleResultClick(product.slug)}
+                  onClick={() => handleResultClick(product.sku)}
                   className="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors group"
                 >
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -147,7 +179,7 @@ export default function SearchBar({ variant = 'navbar', placeholder = 'Search pr
                         {product.name}
                       </h4>
                       <span className="text-sm font-bold text-blue-600">
-                        ${product.price.toFixed(2)}
+                        ${(product.price || 0).toFixed(2)}
                       </span>
                     </div>
                     
@@ -156,7 +188,7 @@ export default function SearchBar({ variant = 'navbar', placeholder = 'Search pr
                         {product.category}
                       </span>
                       <span className="text-xs text-gray-500 truncate">
-                        {product.dosage} • {product.purity}
+                        {product.dosage || 'Research'} • {product.purity || '99%'}
                       </span>
                     </div>
                   </div>
@@ -167,8 +199,18 @@ export default function SearchBar({ variant = 'navbar', placeholder = 'Search pr
         </div>
       )}
 
+      {/* Loading State */}
+      {isLoading && query.trim() && (
+        <div className="absolute top-full mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-200 z-50 p-4">
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-sm text-gray-500 mt-2">Loading products...</p>
+          </div>
+        </div>
+      )}
+
       {/* No Results */}
-      {isOpen && query.trim() && results.length === 0 && (
+      {isOpen && query.trim() && results.length === 0 && !isLoading && (
         <div className="absolute top-full mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-200 z-50 p-4">
           <div className="text-center py-4">
             <div className="text-3xl mb-2">🔍</div>

@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
-import { products } from '@/lib/products';
-import ProductDetail from '@components/ProductDetail';  // ← USE ALIAS
-import RelatedProducts from '@components/RelatedProducts';  // ← USE ALIAS
+import ProductDetail from '@components/ProductDetail';
+import RelatedProducts from '@components/RelatedProducts';
 
 interface ProductPageProps {
   params: Promise<{
@@ -9,16 +8,68 @@ interface ProductPageProps {
   }>;
 }
 
+async function getProduct(slug: string) {
+  try {
+    const response = await fetch(`http://localhost:3000/api/products/${slug}`, {
+      next: { revalidate: 60 }
+    });
+    
+    if (!response.ok) return null;
+    const data = await response.json();
+    
+    // Ensure price is a NUMBER
+    return {
+      ...data,
+      price: typeof data.price === 'string' ? parseFloat(data.price) : (data.price || 0),
+      originalPrice: data.originalPrice 
+        ? (typeof data.originalPrice === 'string' 
+          ? parseFloat(data.originalPrice) 
+          : data.originalPrice)
+        : undefined
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function getProducts() {
+  try {
+    const response = await fetch('http://localhost:3000/api/products', {
+      next: { revalidate: 60 }
+    });
+    
+    if (!response.ok) return [];
+    const data = await response.json();
+    
+    // Ensure ALL prices are NUMBERS
+    return data.map((product: any) => ({
+      ...product,
+      price: typeof product.price === 'string' ? parseFloat(product.price) : (product.price || 0),
+      originalPrice: product.originalPrice 
+        ? (typeof product.originalPrice === 'string' 
+          ? parseFloat(product.originalPrice) 
+          : product.originalPrice)
+        : undefined
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = products.find(p => p.slug === slug);
+  
+  const [product, products] = await Promise.all([
+    getProduct(slug),
+    getProducts()
+  ]);
   
   if (!product) {
     notFound();
   }
   
   const relatedProducts = products
-    .filter(p => p.category === product.category && p.id !== product.id)
+    .filter((p: any) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
   return (
@@ -29,17 +80,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
   );
 }
 
-// Generate static paths for all products
+// FIXED: Generate static paths with proper error handling
 export async function generateStaticParams() {
-  return products.map((product) => ({
-    slug: product.slug,
-  }));
+  try {
+    const products = await getProducts();
+    
+    return products
+      .filter((product: any) => product.sku && typeof product.sku === 'string')
+      .map((product: any) => ({
+        slug: product.sku,
+      }));
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    return [];
+  }
 }
 
-// Add this function for SEO - SEPARATE FUNCTION!
 export async function generateMetadata({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = products.find(p => p.slug === slug);
+  const product = await getProduct(slug);
   
   if (!product) {
     return {
@@ -50,46 +109,6 @@ export async function generateMetadata({ params }: ProductPageProps) {
   
   return {
     title: `${product.name} | Research Peptide | PeptideScience`,
-    description: `${product.description}. ${product.dosage}, ${product.purity} purity. Laboratory-grade research peptide for scientific study.`,
-    keywords: [
-      product.name,
-      'research peptide',
-      'laboratory-grade',
-      product.category,
-      'amino acid sequence',
-      'HPLC-MS verified',
-      'scientific research',
-    ],
-    openGraph: {
-      title: `${product.name} | Research Peptide`,
-      description: product.description,
-      type: 'article',
-      url: `https://peptidebuisness.vercel.app/products/${slug}`,
-      images: [
-        {
-          url: `https://peptidebuisness.vercel.app/api/og?title=${encodeURIComponent(product.name)}&description=${encodeURIComponent(product.description)}`,
-          width: 1200,
-          height: 630,
-          alt: product.name,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${product.name} | Research Peptide`,
-      description: product.description,
-      images: [`https://peptidebuisness.vercel.app/api/og?title=${encodeURIComponent(product.name)}`],
-    },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
-      },
-    },
+    description: `${product.description}. Laboratory-grade research peptide for scientific study.`,
   };
 }

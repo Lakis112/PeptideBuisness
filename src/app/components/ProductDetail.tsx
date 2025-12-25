@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'sonner'; // Add at top of file
+import { toast } from 'sonner';
 
 import { 
   ShoppingCart, 
@@ -10,9 +10,7 @@ import {
   Shield, 
   FileText,
   Beaker,
-  Package,
-  Truck,
-  CreditCard
+  Truck
 } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 
@@ -40,17 +38,32 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const { addItem } = useCart();
   const [selectedTab, setSelectedTab] = useState('overview');
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+  
+  // Ensure product has safe values
+  const safeProduct = {
+    ...product,
+    price: product.price || 0,
+    originalPrice: product.originalPrice || product.price || 0,
+    name: product.name || 'Unnamed Product',
+    description: product.description || '',
+    category: product.category || 'Uncategorized',
+    dosage: product.dosage || '',
+    quantity: product.quantity || '',
+    purity: product.purity || '',
+    storage: product.storage || '',
+    inStock: product.inStock !== undefined ? product.inStock : true
+  };
 
   const handleAddToCart = () => {
     addItem({ 
-      id: product.id, 
-      name: product.name, 
-      price: product.price 
+      id: safeProduct.id, 
+      name: safeProduct.name, 
+      price: safeProduct.price 
     });
     toast.success('Added to cart', {
-    description: `${name} has been added to your cart.`,
-    icon: '🛒',
-});
+      description: `${safeProduct.name} has been added to your cart.`,
+      icon: '🛒',
+    });
   };
 
   return (
@@ -61,29 +74,27 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         <span className="mx-2">/</span>
         <a href="/" className="hover:text-blue-600">Peptides</a>
         <span className="mx-2">/</span>
-        <a href={`/products?category=${product.category}`} className="hover:text-blue-600">
-          {product.category}
+        <a href={`/products?category=${safeProduct.category}`} className="hover:text-blue-600">
+          {safeProduct.category}
         </a>
         <span className="mx-2">/</span>
-        <span className="text-gray-900 font-medium">{product.name}</span>
+        <span className="text-gray-900 font-medium">{safeProduct.name}</span>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-12">
-        {/* Left Column - Product Visual & Info */}
+        {/* Left Column */}
         <div>
-          {/* Product Image/Icon */}
           <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-12 mb-8 flex items-center justify-center">
             <div className="text-9xl">🧪</div>
           </div>
 
-          {/* Quick Specs */}
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="bg-white p-4 rounded-xl border">
               <div className="flex items-center gap-2 mb-2">
                 <Shield className="h-5 w-5 text-green-600" />
                 <span className="font-bold">Purity</span>
               </div>
-              <div className="text-2xl font-bold text-green-700">{product.purity}</div>
+              <div className="text-2xl font-bold text-green-700">{safeProduct.purity}</div>
               <div className="text-sm text-gray-600">HPLC-MS verified</div>
             </div>
             <div className="bg-white p-4 rounded-xl border">
@@ -91,12 +102,11 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 <Thermometer className="h-5 w-5 text-blue-600" />
                 <span className="font-bold">Storage</span>
               </div>
-              <div className="text-2xl font-bold text-blue-700">{product.storage}</div>
+              <div className="text-2xl font-bold text-blue-700">{safeProduct.storage}</div>
               <div className="text-sm text-gray-600">Temperature</div>
             </div>
           </div>
 
-          {/* Shipping Info */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 mb-8">
             <h3 className="font-bold mb-4 flex items-center gap-2">
               <Truck className="h-5 w-5" />
@@ -123,67 +133,62 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </div>
         </div>
 
-        {/* Right Column - Product Details */}
+        {/* Right Column */}
         <div>
-          {/* Category & Stock */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                {product.category}
+                {safeProduct.category}
               </span>
-              {product.subcategory && (
+              {safeProduct.subcategory && (
                 <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
-                  {product.subcategory}
+                  {safeProduct.subcategory}
                 </span>
               )}
             </div>
-            <div className={`px-3 py-1 rounded-full text-sm ${product.inStock ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-              {product.inStock ? 'In Stock ✓' : 'Pre-order'}
+            <div className={`px-3 py-1 rounded-full text-sm ${safeProduct.inStock ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+              {safeProduct.inStock ? 'In Stock ✓' : 'Pre-order'}
             </div>
           </div>
 
-          {/* Product Name */}
-          <h1 className="text-4xl font-bold mb-4">{product.name}</h1>
+          <h1 className="text-4xl font-bold mb-4">{safeProduct.name}</h1>
           
-          {/* Description */}
-          <p className="text-gray-700 text-lg mb-6">{product.description}</p>
+          <p className="text-gray-700 text-lg mb-6">{safeProduct.description}</p>
 
-          {/* Price */}
+          {/* Price Section - Fixed */}
           <div className="mb-8">
             <div className="flex items-baseline gap-4 mb-2">
-              <span className="text-5xl font-bold">${product.price.toFixed(2)}</span>
+              <span className="text-5xl font-bold">${(safeProduct.price).toFixed(2)}</span>
               {hasDiscount && (
                 <>
                   <span className="text-2xl text-gray-400 line-through">
-                    ${product.originalPrice?.toFixed(2)}
+                    ${(safeProduct.originalPrice).toFixed(2)}
                   </span>
                   <span className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-bold">
-                    Save ${(product.originalPrice! - product.price).toFixed(0)}
+                    Save ${(safeProduct.originalPrice - safeProduct.price).toFixed(0)}
                   </span>
                 </>
               )}
             </div>
             <div className="text-gray-600">
-              {product.dosage} • {product.quantity}
+              {safeProduct.dosage} • {safeProduct.quantity}
             </div>
           </div>
 
-          {/* Add to Cart */}
           <div className="mb-12">
             <button 
               onClick={handleAddToCart}
-              disabled={!product.inStock}
+              disabled={!safeProduct.inStock}
               className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
               <ShoppingCart className="h-6 w-6" />
-              {product.inStock ? 'Add to Cart' : 'Notify When Available'}
+              {safeProduct.inStock ? 'Add to Cart' : 'Notify When Available'}
             </button>
             <div className="text-center mt-4 text-sm text-gray-600">
               🔒 Secure checkout • Discreet billing
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="border-b mb-6">
             <div className="flex space-x-8">
               {['overview', 'specifications', 'protocols', 'coa'].map((tab) => (
@@ -198,13 +203,12 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             </div>
           </div>
 
-          {/* Tab Content */}
           <div className="prose max-w-none">
             {selectedTab === 'overview' && (
               <div className="space-y-6">
                 <h3 className="text-xl font-bold">Product Overview</h3>
                 <p>
-                  {product.name} is a research-grade peptide provided in lyophilized form. 
+                  {safeProduct.name} is a research-grade peptide provided in lyophilized form. 
                   Each batch undergoes rigorous third-party testing to verify purity and identity.
                 </p>
                 <div className="bg-blue-50 p-6 rounded-xl">
@@ -238,27 +242,27 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                     <tbody>
                       <tr className="border-b">
                         <td className="py-3 font-medium">Molecular Weight</td>
-                        <td className="py-3 text-gray-700">{product.molecularWeight || 'Available in COA'}</td>
+                        <td className="py-3 text-gray-700">{safeProduct.molecularWeight || 'Available in COA'}</td>
                       </tr>
-                      {product.sequence && (
+                      {safeProduct.sequence && (
                         <tr className="border-b">
                           <td className="py-3 font-medium">Amino Acid Sequence</td>
-                          <td className="py-3 text-gray-700 font-mono text-sm">{product.sequence}</td>
+                          <td className="py-3 text-gray-700 font-mono text-sm">{safeProduct.sequence}</td>
                         </tr>
                       )}
-                      {product.halfLife && (
+                      {safeProduct.halfLife && (
                         <tr className="border-b">
                           <td className="py-3 font-medium">Half-life</td>
-                          <td className="py-3 text-gray-700">{product.halfLife}</td>
+                          <td className="py-3 text-gray-700">{safeProduct.halfLife}</td>
                         </tr>
                       )}
                       <tr className="border-b">
                         <td className="py-3 font-medium">Purity</td>
-                        <td className="py-3 text-gray-700">{product.purity} (HPLC-MS)</td>
+                        <td className="py-3 text-gray-700">{safeProduct.purity} (HPLC-MS)</td>
                       </tr>
                       <tr className="border-b">
                         <td className="py-3 font-medium">Storage</td>
-                        <td className="py-3 text-gray-700">{product.storage}</td>
+                        <td className="py-3 text-gray-700">{safeProduct.storage}</td>
                       </tr>
                       <tr>
                         <td className="py-3 font-medium">Form</td>
@@ -266,34 +270,6 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                       </tr>
                     </tbody>
                   </table>
-                </div>
-              </div>
-            )}
-
-            {selectedTab === 'protocols' && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold">Research Protocols</h3>
-                <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200">
-                  <p className="text-yellow-800 text-sm">
-                    ⚠️ <strong>Disclaimer:</strong> The following information is for research reference only. 
-                    Always consult with qualified professionals and follow institutional guidelines.
-                  </p>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-bold mb-2">Reconstitution</h4>
-                    <p className="text-gray-700">
-                      Reconstitute with bacteriostatic water to desired concentration. 
-                      Typical concentrations range from 1-5 mg/mL depending on research requirements.
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-bold mb-2">Storage After Reconstitution</h4>
-                    <p className="text-gray-700">
-                      Store reconstituted peptide at {product.storage}. Use within 30 days of reconstitution 
-                      for optimal stability.
-                    </p>
-                  </div>
                 </div>
               </div>
             )}
@@ -309,7 +285,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                     with each order.
                   </p>
                   <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Request COA for Batch {product.id.toUpperCase()}
+                    Request COA for Batch {safeProduct.id.toUpperCase()}
                   </button>
                 </div>
               </div>
@@ -317,34 +293,6 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </div>
         </div>
       </div>
-      
-      {/* Structured Data for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Product',
-            name: product.name,
-            description: product.description,
-            brand: {
-              '@type': 'Brand',
-              name: 'PeptideScience',
-            },
-            offers: {
-              '@type': 'Offer',
-              price: product.price,
-              priceCurrency: 'USD',
-              availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
-            },
-            aggregateRating: {
-              '@type': 'AggregateRating',
-              ratingValue: '4.8',
-              reviewCount: '24',
-            },
-          }),
-        }}
-      />
     </div>
   );
 }

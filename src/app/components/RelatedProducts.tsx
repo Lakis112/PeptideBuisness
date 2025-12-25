@@ -23,7 +23,16 @@ export default function RelatedProducts({ products, category }: RelatedProductsP
         {products.map((product) => (
           <ProductCard 
             key={product.id}
-            {...product}
+            {...{
+              ...product,
+              // Add defaults for missing fields
+              dosage: product.dosage || 'Research',
+              quantity: product.quantity || '1 vial',
+              purity: product.purity || '99%',
+              molecularWeight: product.molecularWeight || '',
+              sequence: product.sequence || '',
+              inStock: product.inStock !== undefined ? product.inStock : true,
+            }}
           />
         ))}
       </div>

@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { ShoppingCart, FlaskRound as Flask, CheckCircle, Award, BarChart3, FileText } from 'lucide-react';
 import { useCart } from '@/lib/cart';
-import { toast } from 'sonner'; // Add at top of file
+import { toast } from 'sonner';
 
 interface ProductCardProps {
   id: string;
@@ -12,13 +12,13 @@ interface ProductCardProps {
   price: number;
   originalPrice?: number;
   category: string;
-  dosage: string;
-  quantity: string;
-  purity: string;
+  dosage?: string;
+  quantity?: string;
+  purity?: string;
   molecularWeight?: string;
   casNumber?: string;
   sequence?: string;
-  inStock: boolean;
+  inStock?: boolean;
   isFeatured?: boolean;
 }
 
@@ -28,13 +28,13 @@ export default function ProductCard({
   price, 
   originalPrice,
   description, 
-  dosage,
-  quantity,
-  purity,
+  dosage = 'Research',
+  quantity = '1 vial',
+  purity = '99%',
   molecularWeight,
   casNumber,
   sequence,
-  inStock,
+  inStock = true,
   isFeatured = false
 }: ProductCardProps) {
   const { addItem } = useCart();
@@ -46,14 +46,16 @@ export default function ProductCard({
   const handleAddToCart = () => {
     addItem({ id, name, price });
     toast.success('Added to cart', {
-    description: `${name} has been added to your cart.`,
-    icon: '🛒',
-});
+      description: `${name} has been added to your cart.`,
+      icon: '🛒',
+    });
   };
 
-  // Calculate purity color based on percentage
+  // Calculate purity color based on percentage - FIXED
   const getPurityColor = (purity: string) => {
-    const percent = parseFloat(purity.replace('%', ''));
+    if (!purity) return 'from-amber-500 to-orange-400';
+    const percent = parseFloat(purity.replace('%', '').replace(/[^0-9.]/g, ''));
+    if (isNaN(percent)) return 'from-amber-500 to-orange-400';
     if (percent >= 99) return 'from-emerald-500 to-green-400';
     if (percent >= 98) return 'from-cyan-500 to-blue-400';
     return 'from-amber-500 to-orange-400';
@@ -105,7 +107,6 @@ export default function ProductCard({
             <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-inner flex items-center justify-center border border-gray-100">
               <Flask className="h-12 w-12 text-gradient bg-gradient-to-r from-[#FF6BCB] to-[#4FC3F7] bg-clip-text text-transparent" />
             </div>
-            
           </div>
         </div>
 
@@ -170,8 +171,6 @@ export default function ProductCard({
               </div>
             </div>
           )}
-
-          
         </div>
 
         {/* Sequence Preview */}
@@ -192,11 +191,11 @@ export default function ProductCard({
           <div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-gray-900">
-                ${price.toFixed(2)}
+                ${(price || 0).toFixed(2)}
               </span>
               {hasDiscount && (
                 <span className="text-sm text-gray-400 line-through">
-                  ${originalPrice?.toFixed(2)}
+                  ${(originalPrice || 0).toFixed(2)}
                 </span>
               )}
             </div>

@@ -346,3 +346,33 @@ export const useCart = create<CartStore>()(
     }
   )
 );
+
+// Export a function to manually clear cart storage
+export const clearCartStorage = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('cart-storage');
+    sessionStorage.removeItem('cart-storage');
+  }
+};
+
+// Listen to auth changes and clear cart when logged out
+if (typeof window !== 'undefined') {
+  // Intercept logout to clear cart
+  const originalFetch = window.fetch;
+  window.fetch = async function(...args) {
+    const response = await originalFetch.apply(this, args);
+    
+    // Check if this is a logout request
+    if (args[0] === '/api/auth/logout' && args[1]?.method === 'POST') {
+      if (response.ok) {
+        // Clear cart state
+        useCart.getState().clearCart();
+        // Clear storage
+        localStorage.removeItem('cart-storage');
+        sessionStorage.removeItem('cart-storage');
+      }
+    }
+    
+    return response;
+  };
+}
