@@ -11,6 +11,7 @@ interface Product {
   price: number;
   category: string;
   sku: string;
+  slug: string;
   dosage?: string;
   purity?: string;
   stock?: number;
@@ -297,23 +298,25 @@ function HomeContent() {
           ) : filteredProducts.length > 0 ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.slice(0, 8).map((product) => (
-                  <ProductCard 
-                    key={product.id}
-                    {...{
-                      ...product,
-                      // Ensure all required props are passed
-                      dosage: product.dosage || 'Research',
-                      quantity: '1 vial',
-                      purity: product.purity || '99%',
-                      molecularWeight: '',
-                      sequence: '',
-                      inStock: product.inStock !== undefined ? product.inStock : (product.stock > 0),
-                      isFeatured: false
-                    }}
-                  />
-                ))}
-              </div>
+  {filteredProducts.slice(0, 8).map((product) => (
+    <ProductCard 
+      key={product.id}
+      id={product.id}
+      sku={product.slug || product.sku}
+      name={product.name}
+      description={product.description}
+      price={product.price}
+      category={product.category}
+      dosage={product.dosage || 'Research'}
+      quantity="1 vial"
+      purity={product.purity || '99%'}
+      molecularWeight={product.molecularWeight || ''}
+      sequence={product.sequence || ''}
+      inStock={product.inStock !== undefined ? product.inStock : (product.stock > 0)}
+      isFeatured={false}
+    />
+  ))}
+</div>
 
               {/* View All Button - Shows only if we have products */}
               <div className="text-center mt-12">

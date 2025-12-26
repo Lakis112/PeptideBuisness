@@ -124,7 +124,7 @@ export default function Navbar() {
           </nav>
 
           {/* Right Section: Search, User, Cart */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6 ml-8">
             {/* Search Bar */}
             <SearchBar variant="navbar" placeholder="Search peptides..." />
             

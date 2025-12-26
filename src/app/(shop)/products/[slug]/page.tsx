@@ -73,11 +73,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
     .slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ProductDetail product={product} />
-      <RelatedProducts products={relatedProducts} category={product.category} />
-    </div>
-  );
+  <div className="min-h-screen bg-gray-50">
+    <ProductDetail 
+      product={product} 
+      sku={product.slug || product.sku}  // ← Add sku prop
+    />
+    <RelatedProducts 
+      products={relatedProducts} 
+      category={product.category}
+      sku={product.slug || product.sku}  // ← Add sku prop
+    />
+  </div>
+);
 }
 
 // FIXED: Generate static paths with proper error handling

@@ -3,6 +3,7 @@ import ProductCard from './ProductCard';
 interface RelatedProductsProps {
   products: any[];
   category: string;
+  sku?: string; // ← Add this
 }
 
 export default function RelatedProducts({ products, category }: RelatedProductsProps) {
@@ -23,16 +24,21 @@ export default function RelatedProducts({ products, category }: RelatedProductsP
         {products.map((product) => (
           <ProductCard 
             key={product.id}
-            {...{
-              ...product,
-              // Add defaults for missing fields
-              dosage: product.dosage || 'Research',
-              quantity: product.quantity || '1 vial',
-              purity: product.purity || '99%',
-              molecularWeight: product.molecularWeight || '',
-              sequence: product.sequence || '',
-              inStock: product.inStock !== undefined ? product.inStock : true,
-            }}
+            id={product.id}
+            sku={product.slug || product.sku} // ← CRITICAL: Add this
+            name={product.name}
+            description={product.description}
+            price={product.price}
+            category={product.category}
+            dosage={product.dosage || 'Research'}
+            quantity={product.quantity || '1 vial'}
+            purity={product.purity || '99%'}
+            molecularWeight={product.molecularWeight || ''}
+            sequence={product.sequence || ''}
+            inStock={product.inStock !== undefined ? product.inStock : true}
+            // Add optional fields if needed:
+            originalPrice={product.originalPrice}
+            casNumber={product.casNumber || ''}
           />
         ))}
       </div>

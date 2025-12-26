@@ -128,11 +128,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 <h3 className="text-lg font-bold mb-4">Featured Products</h3>
                 <div className="space-y-4">
                   {featuredProducts.map((product: any) => (
-                    <a 
-                      key={product.id}
-                      href={`/products/${product.sku}`}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition"
-                    >
+                   <a 
+  key={product.id}
+  href={`/products/${product.slug || product.sku}`}
+  className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition"
+>
                       <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center">
                         <span className="text-lg">🧪</span>
                       </div>
@@ -196,23 +196,28 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             {/* Product Grid */}
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product: any) => (
-                  <ProductCard 
-                    key={product.id} 
-                    {...{
-                      ...product,
-                      // Ensure all required props are passed
-                      dosage: product.dosage || 'Research',
-                      quantity: product.quantity || '1 vial',
-                      purity: product.purity || '99%',
-                      molecularWeight: product.molecularWeight || '',
-                      sequence: product.sequence || '',
-                      inStock: product.inStock !== undefined ? product.inStock : true,
-                      isFeatured: product.isFeatured || false
-                    }}
-                  />
-                ))}
-              </div>
+  {filteredProducts.map((product: any) => (
+    <ProductCard 
+      key={product.id} 
+      id={product.id}
+      sku={product.slug || product.sku} 
+      name={product.name}
+      description={product.description}
+      price={product.price}
+      category={product.category}
+      dosage={product.dosage || 'Research'}
+      quantity={product.quantity || '1 vial'}
+      purity={product.purity || '99%'}
+      molecularWeight={product.molecularWeight || ''}
+      sequence={product.sequence || ''}
+      inStock={product.inStock !== undefined ? product.inStock : true}
+      isFeatured={product.isFeatured || false}
+      // Optional fields if your API returns them
+      originalPrice={product.originalPrice}
+      casNumber={product.casNumber || ''}
+    />
+  ))}
+</div>
             ) : (
               <div className="bg-white rounded-xl border p-12 text-center">
                 <div className="text-5xl mb-6">🔬</div>
