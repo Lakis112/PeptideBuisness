@@ -39,6 +39,7 @@ export default function RelatedProducts({ products, category }: RelatedProductsP
             // Add optional fields if needed:
             originalPrice={product.originalPrice}
             casNumber={product.casNumber || ''}
+            imageUrl={product.imageUrl}
           />
         ))}
       </div>

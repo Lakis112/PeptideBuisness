@@ -1,5 +1,7 @@
+
 import ProductCard from '@components/ProductCard';
 import { Filter, Grid } from 'lucide-react';
+import SortSelect from '@components/SortSelect'; // Add this import
 
 export const metadata = {
   title: 'Product Catalog | Pharmaceutical Grade Peptides',
@@ -10,6 +12,7 @@ interface ProductsPageProps {
   searchParams: Promise<{
     category?: string;
     search?: string;
+    sort?: string;
   }>;
 }
 
@@ -35,7 +38,8 @@ async function getProducts() {
       dosage: product.dosage || 'Research',
       quantity: product.quantity || '1 vial',
       purity: product.purity || '99%',
-      inStock: product.inStock !== undefined ? product.inStock : (product.stock > 0)
+      inStock: product.inStock !== undefined ? product.inStock : (product.stock > 0),
+      featured: product.featured || false // Use only the featured field
     }));
   } catch {
     return [];
@@ -46,8 +50,28 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const params = await searchParams;
   const selectedCategory = params?.category || 'all';
   const searchQuery = params?.search || '';
+  const sortBy = params?.sort || 'featured';
   
   const products = await getProducts();
+
+// DEBUG: Add this to see what's happening
+console.log('=== DEBUG PRODUCTS ===');
+console.log('Total products:', products.length);
+console.log('First 3 products:');
+products.slice(0, 3).forEach((p, i) => {
+  console.log(`Product ${i + 1}:`, {
+    name: p.name,
+    featured: p.featured,
+    hasFeaturedField: 'featured' in p,
+    allFields: Object.keys(p)
+  });
+});
+
+// Check how many are actually featured
+const featuredProducts = products.filter(p => p.featured === true);
+console.log('Featured products (true):', featuredProducts.length);
+console.log('Featured product names:', featuredProducts.map(p => p.name));
+console.log('=== END DEBUG ===');
   
   // Extract unique categories and count products in each
   const categories = Array.from(
@@ -75,15 +99,41 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     return matchesCategory && matchesSearch;
   });
   
-  // Get featured products for the sidebar
-  const featuredProducts = products.filter((p: any) => p.isFeatured || p.featured).slice(0, 3);
+// Apply sorting
+const sortedProducts = [...filteredProducts].sort((a, b) => {
+  switch (sortBy) {
+    case 'price-low':
+      return (a.price || 0) - (b.price || 0);
+    case 'price-high':
+      return (b.price || 0) - (a.price || 0);
+    case 'name-az':
+      return (a.name || '').localeCompare(b.name || '');
+    case 'name-za':
+      return (b.name || '').localeCompare(a.name || '');
+    case 'featured':
+    default:
+      // Use ONLY the featured field (not isFeatured)
+      const aFeatured = Boolean(a.featured);
+      const bFeatured = Boolean(b.featured);
+      
+      // Featured products first
+      if (aFeatured && !bFeatured) return -1;
+      if (!aFeatured && bFeatured) return 1;
+      
+      // If same featured status, sort by name
+      return (a.name || '').localeCompare(b.name || '');
+  }
+});
+  
+// Get featured products for the sidebar
+//const featuredProducts = products.filter((p: any) => p.featured).slice(0, 3);
   
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-16">
         <div className="container mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Pharmaceutical Peptide Catalog</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Pharmaceutical Product Catalog</h1>
           <p className="text-xl text-blue-100 max-w-3xl">
             Browse our EU-GMP certified pharmaceutical peptides. Each batch undergoes rigorous 
             analytical validation including HPLC, LC-MS/MS, and amino acid analysis.
@@ -178,46 +228,48 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 <h2 className="text-xl font-bold">
                   {selectedCategory === 'all' ? 'All Products' : selectedCategory} 
                   {searchQuery && ` matching "${searchQuery}"`}
+                  {sortBy !== 'featured' && ` • Sorted by ${sortBy.replace('-', ' ')}`}
                 </h2>
                 <p className="text-gray-600">
-                  {filteredProducts.length} of {products.length} products
+                  {sortedProducts.length} of {products.length} products
                 </p>
               </div>
               
-              {/* Sorting */}
+                {/* Sorting */}
               <div className="mt-4 sm:mt-0">
-                <button className="flex items-center gap-2 px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50">
-                  <Grid className="h-4 w-4" />
-                  Sort by: Featured
-                </button>
+                <SortSelect 
+                  currentSort={sortBy}
+                  selectedCategory={selectedCategory}
+                  searchQuery={searchQuery}
+                />
               </div>
             </div>
             
             {/* Product Grid */}
-            {filteredProducts.length > 0 ? (
+            {sortedProducts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {filteredProducts.map((product: any) => (
-    <ProductCard 
-      key={product.id} 
-      id={product.id}
-      sku={product.slug || product.sku} 
-      name={product.name}
-      description={product.description}
-      price={product.price}
-      category={product.category}
-      dosage={product.dosage || 'Research'}
-      quantity={product.quantity || '1 vial'}
-      purity={product.purity || '99%'}
-      molecularWeight={product.molecularWeight || ''}
-      sequence={product.sequence || ''}
-      inStock={product.inStock !== undefined ? product.inStock : true}
-      isFeatured={product.isFeatured || false}
-      // Optional fields if your API returns them
-      originalPrice={product.originalPrice}
-      casNumber={product.casNumber || ''}
-    />
-  ))}
-</div>
+                {sortedProducts.map((product: any) => (
+                  <ProductCard 
+                    key={product.id} 
+                    id={product.id}
+                    sku={product.slug || product.sku} 
+                    name={product.name}
+                    description={product.description}
+                    price={product.price}
+                    category={product.category}
+                    dosage={product.dosage || 'Research'}
+                    quantity={product.quantity || '1 vial'}
+                    purity={product.purity || '99%'}
+                    molecularWeight={product.molecularWeight || ''}
+                    sequence={product.sequence || ''}
+                    inStock={product.inStock !== undefined ? product.inStock : true}
+                    isFeatured={product.isFeatured || false}
+                    originalPrice={product.originalPrice}
+                    casNumber={product.casNumber || ''}
+                    imageUrl={product.imageUrl} 
+                  />
+                ))}
+              </div>
             ) : (
               <div className="bg-white rounded-xl border p-12 text-center">
                 <div className="text-5xl mb-6">🔬</div>
@@ -235,7 +287,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             )}
             
             {/* Pagination (simplified for now) */}
-            {filteredProducts.length > 0 && (
+            {sortedProducts.length > 0 && (
               <div className="mt-12 text-center">
                 <div className="inline-flex items-center gap-2">
                   <button className="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50">

@@ -16,6 +16,7 @@ interface Product {
   purity?: string;
   stock?: number;
   inStock?: boolean;
+  imageUrl?: string;
 }
 
 function HomeContent() {
@@ -164,12 +165,12 @@ function HomeContent() {
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-800 to-indigo-900">
                   Ultra-Pure
                 </span>
-                <span className="block text-gray-900">Pharmaceutical Peptides</span>
+                <span className="block text-gray-900">Pharmaceutical Products</span>
               </h1>
 
               {/* Subheadline */}
               <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto mb-10 leading-relaxed backdrop-blur-sm bg-white/30 p-4 rounded-xl">
-                Pharmaceutical-grade peptides manufactured under EU-GMP standards in Poland. 
+                Pharmaceutical-grade AAS,Peptides & Ancillaries manufactured under EU-GMP standards in Poland. 
                 Each batch undergoes <span className="font-semibold text-blue-800">triple-quadrupole LC-MS/MS validation</span> with full regulatory documentation.
               </p>
 
@@ -186,7 +187,7 @@ function HomeContent() {
                 </Link>
                 
                 <Link 
-                  href="/research" 
+                  href="/quality" 
                   className="inline-flex items-center justify-center gap-3 bg-white/90 text-blue-800 border-2 border-blue-300 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 backdrop-blur-sm"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,9 +267,9 @@ function HomeContent() {
       <section className="py-16 px-4 bg-white">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Pharmaceutical Peptides</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Pharmaceutical Products</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Browse our selection of EU-GMP certified peptides for research applications
+              Browse our selection of EU-GMP certified products for research applications
             </p>
           </div>
 
@@ -314,6 +315,7 @@ function HomeContent() {
       sequence={product.sequence || ''}
       inStock={product.inStock !== undefined ? product.inStock : (product.stock > 0)}
       isFeatured={false}
+      imageUrl={product.imageUrl}
     />
   ))}
 </div>
@@ -356,7 +358,7 @@ function HomeContent() {
           Pharmaceutical <span className="text-blue-800">Excellence</span> Metrics
         </h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Quantifiable quality standards that define our commitment to research-grade peptide production
+          Quantifiable quality standards that define our commitment to pharmaceutical products
         </p>
       </div>
 
@@ -494,17 +496,13 @@ function HomeContent() {
 
       {/* CTA Section */}
       <section className="bg-gradient-to-br from-blue-50 to-indigo-50 py-16 px-4">
-        <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-6">Ready for Your Research?</h2>
-          <p className="text-gray-700 text-lg max-w-2xl mx-auto mb-8">
-            Access pharmaceutical-grade peptides with complete analytical documentation for your research needs.
-          </p>
+        <div className="container mx-auto text-center"> 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
-              href="/contact" 
+              href="/quality" 
               className="bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-800 transition-colors"
             >
-              Request Technical Documentation
+              Certification of Analysis
             </Link>
             <Link 
               href="/products" 

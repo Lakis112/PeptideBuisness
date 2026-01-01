@@ -77,6 +77,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <ProductDetail 
       product={product} 
       sku={product.slug || product.sku}  // ← Add sku prop
+      imageUrl={product.imageUrl}
     />
     <RelatedProducts 
       products={relatedProducts} 

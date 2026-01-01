@@ -1,18 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import SearchBar from './SearchBar';
-import UserMenu from './UserMenu'; // <-- ADD THIS IMPORT
+import UserMenu from './UserMenu';
 
 export default function Navbar() {
   const { items } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProductsOpen, setIsProductsOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
   
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Fetch categories from existing products API
+  useEffect(() => {
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(products => {
+        // Extract unique categories from products
+        const uniqueCategories = [...new Set(
+          products
+            .map(p => p.category)
+            .filter(Boolean)
+        )];
+        setCategories(uniqueCategories);
+      })
+      .catch(() => setCategories([]));
+  }, []);
+
+  // Hover handlers
+  const handleMouseEnter = () => setIsProductsOpen(true);
+  const handleMouseLeave = () => setIsProductsOpen(false);
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
@@ -21,7 +42,6 @@ export default function Navbar() {
           {/* Logo & Brand */}
           <div className="flex items-center mr-auto pr-8">
             <Link href="/" className="flex items-center gap-3 group">
-              {/* Logo Container */}
               <div className="w-20 h-20 shrink-0">
                 <img 
                   src="/logo.jpg" 
@@ -30,7 +50,6 @@ export default function Navbar() {
                 />
               </div>
               
-              {/* Brand Name */}
               <div className="hidden sm:block">
                 <div className="flex flex-col">
                   <h1 className="text-xl font-bold leading-tight whitespace-nowrap">
@@ -55,10 +74,13 @@ export default function Navbar() {
               Home
             </Link>
             
-            {/* Products Dropdown */}
-            <div className="relative">
+            {/* Products Dropdown with HOVER */}
+            <div 
+              className="relative"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
               <button
-                onClick={() => setIsProductsOpen(!isProductsOpen)}
                 className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 Products
@@ -75,28 +97,22 @@ export default function Navbar() {
                     <div className="font-medium">All Products</div>
                     <div className="text-xs text-gray-500 mt-1">Complete pharmaceutical catalog</div>
                   </Link>
-                  <div className="border-t border-gray-100 my-2"></div>
-                  <Link 
-                    href="/products?category=Weight+Loss" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    onClick={() => setIsProductsOpen(false)}
-                  >
-                    GLP-1 Analogs
-                  </Link>
-                  <Link 
-                    href="/products?category=Recovery" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    onClick={() => setIsProductsOpen(false)}
-                  >
-                    Therapeutic Peptides
-                  </Link>
-                  <Link 
-                    href="/products?category=Growth+Hormone" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    onClick={() => setIsProductsOpen(false)}
-                  >
-                    Research Compounds
-                  </Link>
+                  
+                  {categories.length > 0 && (
+                    <>
+                      <div className="border-t border-gray-100 my-2"></div>
+                      {categories.map((category, index) => (
+                        <Link 
+                          key={index}
+                          href={`/products?category=${encodeURIComponent(category)}`}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                          onClick={() => setIsProductsOpen(false)}
+                        >
+                          {category}
+                        </Link>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -125,15 +141,12 @@ export default function Navbar() {
 
           {/* Right Section: Search, User, Cart */}
           <div className="flex items-center gap-6 ml-8">
-            {/* Search Bar */}
             <SearchBar variant="navbar" placeholder="Search peptides..." />
             
-            {/* User Menu */}
             <div className="hidden lg:block">
               <UserMenu />
             </div>
             
-            {/* Cart Button */}
             <Link 
               href="/cart"
               className="relative flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2.5 rounded-xl hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all group"
@@ -147,7 +160,6 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* Mobile Menu Button */}
             <button 
               className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -169,13 +181,45 @@ export default function Navbar() {
                 Home
               </Link>
               
-              <Link 
-                href="/products" 
-                className="px-4 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Products
-              </Link>
+              {/* Mobile Products Dropdown */}
+              <div className="px-4">
+                <button
+                  onClick={() => setIsProductsOpen(!isProductsOpen)}
+                  className="flex items-center justify-between w-full py-3 text-base font-medium text-gray-700 hover:text-blue-600 rounded-lg transition-colors"
+                >
+                  Products
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isProductsOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isProductsOpen && (
+                  <div className="mt-2 ml-4 space-y-2">
+                    <Link 
+                      href="/products" 
+                      className="block py-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
+                      onClick={() => {
+                        setIsProductsOpen(false);
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      All Products
+                    </Link>
+                    
+                    {categories.map((category, index) => (
+                      <Link 
+                        key={index}
+                        href={`/products?category=${encodeURIComponent(category)}`}
+                        className="block py-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
+                        onClick={() => {
+                          setIsProductsOpen(false);
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        {category}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
               
               <Link 
                 href="/quality" 
@@ -201,14 +245,12 @@ export default function Navbar() {
                 Contact
               </Link>
 
-              {/* Mobile User Menu & Auth */}
               <div className="px-4 pt-2 border-t border-gray-100">
                 <div className="lg:hidden">
                   <UserMenu />
                 </div>
               </div>
               
-              {/* Mobile Search */}
               <div className="px-4 pt-2">
                 <SearchBar variant="navbar" placeholder="Search products..." />
               </div>

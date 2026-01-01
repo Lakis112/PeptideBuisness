@@ -20,7 +20,7 @@ export default function Footer() {
             </div>
             
             <p className="text-gray-300 text-sm leading-relaxed">
-              EU-GMP certified pharmaceutical peptides for research use. 
+              EU-GMP certified pharmaceutical products. 
               Manufactured in Poland with full analytical validation and 
               regulatory documentation.
             </p>
@@ -85,7 +85,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 group">
+                <a href="/quality" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 group">
                   <FileText className="h-4 w-4 text-blue-400" />
                   <span>Documentation</span>
                 </a>
@@ -113,19 +113,13 @@ export default function Footer() {
                 </div>
               </div>
               
-              <div className="flex items-start gap-3">
-                <Phone className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium">Phone</p>
-                  <p className="text-gray-300 text-sm">+1 (555) 123-4567</p>
-                </div>
-              </div>
+              
               
               <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium">Location</p>
-                  <p className="text-gray-300 text-sm">Boston, MA, USA</p>
+                  <p className="text-gray-300 text-sm">Wroclaw, Poland</p>
                 </div>
               </div>
             </div>
@@ -141,9 +135,7 @@ export default function Footer() {
             <p className="text-gray-400 text-sm">
               © {new Date().getFullYear()} MMN Pharmaceuticals. All rights reserved.
             </p>
-            <p className="text-gray-500 text-xs mt-1">
-              Pharmaceutical-grade peptides for research use only. Not for human consumption.
-            </p>
+
           </div>
           
           <div className="flex items-center gap-6">
@@ -162,8 +154,9 @@ export default function Footer() {
         {/* Regulatory Notice */}
         <div className="mt-8 p-4 bg-gradient-to-r from-red-900/20 to-red-800/10 border border-red-800/30 rounded-lg text-center">
           <p className="text-sm text-red-300 font-medium">
-            ⚠️ WARNING: For laboratory research use only. Not for human or veterinary use. 
-            Not for consumption. Keep out of reach of children. Only for use by qualified professionals.
+            ⚠️ WARNING: Always consult a qualified professional before the use of our products.MMN Pharmaceuticals®
+		does not bring any responsibility for unethical or iresponsible use of its products.
+               Keep out of reach of children. Only for use by qualified professionals.
           </p>
         </div>
       </div>

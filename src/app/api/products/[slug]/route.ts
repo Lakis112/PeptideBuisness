@@ -1,4 +1,4 @@
-// /api/products/[slug]/route.ts - SIMPLIFIED VERSION
+///api/products/[slug]/route.ts - SIMPLIFIED VERSION
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
@@ -21,6 +21,7 @@ export async function GET(
         status,
         created_at,
         updated_at,
+        image_url as "imageUrl",  -- ← ADD THIS LINE
         -- Add all required fields for ProductDetail
         'Research' as dosage,
         '1 vial' as quantity,

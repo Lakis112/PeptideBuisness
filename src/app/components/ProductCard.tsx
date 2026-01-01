@@ -22,6 +22,7 @@ interface ProductCardProps {
   sequence?: string;
   inStock?: boolean;
   isFeatured?: boolean;
+  imageUrl?: string;
 }
 
 export default function ProductCard({ 
@@ -38,7 +39,8 @@ export default function ProductCard({
   casNumber,
   sequence,
   inStock = true,
-  isFeatured = false
+  isFeatured = false,
+  imageUrl
 }: ProductCardProps) {
   const { addItem } = useCart();
   const hasDiscount = originalPrice && originalPrice > price;
@@ -108,19 +110,34 @@ export default function ProductCard({
           </div>
 
           {/* Product Icon/Image */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-inner flex items-center justify-center border border-gray-100">
-                <Flask className="h-12 w-12 text-gradient bg-gradient-to-r from-[#FF6BCB] to-[#4FC3F7] bg-clip-text text-transparent" />
-              </div>
-            </div>
-          </div>
+       <div className="absolute inset-0 flex items-center justify-center p-4">
+  {imageUrl ? (
+    <div className="relative w-full h-full flex items-center justify-center">
+      <img 
+        src={imageUrl}
+        alt={name}
+        className="max-w-full max-h-full object-contain rounded-lg"
+        onError={(e) => {
+          // Fallback if image fails to load
+          e.currentTarget.style.display = 'none';
+          // Show flask icon as fallback
+        }}
+      />
+    </div>
+  ) : (
+    <div className="relative">
+      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-inner flex items-center justify-center border border-gray-100">
+        <Flask className="h-12 w-12 text-gradient bg-gradient-to-r from-[#FF6BCB] to-[#4FC3F7] bg-clip-text text-transparent" />
+      </div>
+    </div>
+  )}
+</div>
 
           {/* Stock Status */}
           <div className={`absolute bottom-4 left-4 flex items-center gap-1.5 ${inStock ? 'text-emerald-600' : 'text-amber-600'}`}>
             <div className={`w-2 h-2 rounded-full ${inStock ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
             <span className="text-xs font-medium">
-              {inStock ? 'In Stock • Ships in 24h' : 'Pre-order • 3-5 days'}
+              {inStock > 0 ? 'In Stock' : 'Pre-order • 3-5 days'}
             </span>
           </div>
         </div>
@@ -130,24 +147,24 @@ export default function ProductCard({
           {/* Category & Dosage */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              {dosage}
+              HPLC Tested Product
             </span>
             <div className="flex items-center gap-1 text-xs text-gray-500">
               <BarChart3 className="h-3 w-3" />
-              <span>Research Grade</span>
+              <span>Pharma Grade</span>
             </div>
           </div>
 
           {/* Product Name */}
-          <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-[#9575CD] transition-colors">
+          <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#9575CD] transition-colors">
             {name}
           </h3>
 
           {/* Short Description */}
-          <p className="text-sm text-gray-600 mb-5 line-clamp-2">
+          <p className="text-sm text-gray-600 mb-5 line-clamp-3">
             {description}
           </p>
-
+	
           {/* Technical Specifications Grid */}
           <div className="grid grid-cols-2 gap-3 mb-6">
             {/* Purity - Highlighted */}
@@ -157,6 +174,7 @@ export default function ProductCard({
                 {purity}
               </div>
             </div>
+		
 
             {/* Molecular Weight */}
             {molecularWeight && (

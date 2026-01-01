@@ -19,6 +19,7 @@ interface Product {
   sku: string;
   dosage?: string;
   purity?: string;
+  imageUrl?: string;
 }
 
 export default function SearchBar({ variant = 'navbar', placeholder = 'Search products...' }: SearchBarProps) {
@@ -57,14 +58,21 @@ export default function SearchBar({ variant = 'navbar', placeholder = 'Search pr
       return;
     }
 
-    const filtered = allProducts.filter(product => {
-      const searchTerm = query.toLowerCase();
-      return (
-        product.name.toLowerCase().includes(searchTerm) ||
-        (product.description && product.description.toLowerCase().includes(searchTerm)) ||
-        product.category.toLowerCase().includes(searchTerm) ||
-        product.sku.toLowerCase().includes(searchTerm)
-      );
+  const filtered = allProducts.filter(product => {
+    if (!product) return false;
+    
+    const searchTerm = query.toLowerCase();
+    const productName = product.name || '';
+    const productCategory = product.category || '';
+    const productSku = product.sku || '';
+    const productDescription = product.description || '';
+    
+    return (
+      productName.toLowerCase().includes(searchTerm) ||
+      productDescription.toLowerCase().includes(searchTerm) ||
+      productCategory.toLowerCase().includes(searchTerm) ||
+      productSku.toLowerCase().includes(searchTerm)
+    );
     }).slice(0, 5); // Limit to 5 results for dropdown
 
     setResults(filtered);
@@ -169,9 +177,25 @@ export default function SearchBar({ variant = 'navbar', placeholder = 'Search pr
                   onClick={() => handleResultClick(product.sku)}
                   className="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors group"
                 >
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg">🧪</span>
-                  </div>
+                  {product.imageUrl ? (
+  <div className="w-10 h-10 flex-shrink-0">
+    <img 
+      src={product.imageUrl} 
+      alt={product.name}
+      className="w-full h-full object-cover rounded-lg"
+      onError={(e) => {
+        // Fallback to emoji if image fails to load
+        e.currentTarget.style.display = 'none';
+        e.currentTarget.parentElement!.innerHTML = 
+          '<div class="w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center"><span class="text-lg">🧪</span></div>';
+      }}
+    />
+  </div>
+) : (
+  <div className="w-10 h-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
+    <span className="text-lg">🧪</span>
+  </div>
+)}
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">

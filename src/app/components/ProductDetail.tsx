@@ -31,10 +31,11 @@ interface ProductDetailProps {
     halfLife?: string;
     storage: string;
     inStock: boolean;
+    imageUrl?: string;
   };
 }
 
-export default function ProductDetail({ product }: ProductDetailProps) {
+export default function ProductDetail({ product, sku ,imageUrl }: ProductDetailProps) {
   const { addItem } = useCart();
   const [selectedTab, setSelectedTab] = useState('overview');
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
@@ -85,8 +86,16 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         {/* Left Column */}
         <div>
           <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-12 mb-8 flex items-center justify-center">
-            <div className="text-9xl">🧪</div>
-          </div>
+  {imageUrl ? (
+    <img 
+      src={imageUrl}
+      alt={product.name}
+      className="max-w-full max-h-96 object-contain rounded-lg"
+    />
+  ) : (
+    <div className="text-9xl">🧪</div>
+  )}
+</div>
 
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="bg-white p-4 rounded-xl border">

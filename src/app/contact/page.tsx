@@ -15,20 +15,36 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setSubmitStatus('idle');
+  
+  try {
+    const response = await fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    const data = await response.json();
+    
+    if (response.ok) {
       setSubmitStatus('success');
       setFormData({ name: '', email: '', organization: '', inquiryType: 'general', message: '' });
-      
-      // Reset status after 5 seconds
-      setTimeout(() => setSubmitStatus('idle'), 5000);
-    }, 1500);
-  };
+    } else {
+      setSubmitStatus('error');
+      console.error('Form error:', data.error);
+    }
+  } catch (error) {
+    setSubmitStatus('error');
+    console.error('Network error:', error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
