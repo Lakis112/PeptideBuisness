@@ -38,7 +38,6 @@ export default function CheckoutPage() {
   };
 
   const handleCheckout = async () => {
-    // Use formData.email instead of email
     if (!formData.email || !formData.firstName || !formData.address) {
       toast.error('Please fill in all required shipping information');
       return;
@@ -54,12 +53,11 @@ export default function CheckoutPage() {
 
     localStorage.setItem('lastOrderEmail', formData.email);  
     try {
-      // Prepare order data - use formData.email
       const orderData = {
         cartItems: items,
         shippingAddress: {
           fullName: `${formData.firstName} ${formData.lastName}`,
-          email: formData.email,  // ← Changed from email to formData.email
+          email: formData.email,
           organization: formData.organization,
           address: formData.address,
           city: formData.city,
@@ -71,7 +69,6 @@ export default function CheckoutPage() {
         notes: formData.notes
       };
 
-      // Call your orders API
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
@@ -83,7 +80,6 @@ export default function CheckoutPage() {
       const result = await response.json();
       
       if (response.ok) {
-        // Use formData.email in success message too
         toast.success(`Order confirmed! Order #${result.order.orderNumber}. Confirmation sent to ${formData.email}`);
         clearCart();
         router.push(`/order-success?order=${result.order.orderNumber}`);
@@ -546,7 +542,7 @@ export default function CheckoutPage() {
                         Processing Order...
                       </span>
                     ) : (
-                      `Complete Order - $${total.toFixed(2)}`
+                      `Complete Order - $${(total + 50).toFixed(2)}`
                     )}
                   </button>
                 </div>
@@ -566,19 +562,19 @@ export default function CheckoutPage() {
                     <span className="font-medium">${total.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">GMP Documentation</span>
-                    <span className="text-green-600 font-semibold">Included</span>
+                    <span className="text-gray-600">Shipping</span>
+                    <span className="font-medium">$50.00</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Priority Shipping</span>
-                    <span className="text-green-600 font-semibold">Free</span>
+                    <span className="text-gray-600">GMP Documentation</span>
+                    <span className="text-green-600 font-semibold">Included</span>
                   </div>
                   <div className="border-t border-gray-200 pt-4">
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
                       <div>
-                        <div className="text-2xl">${total.toFixed(2)}</div>
-                        <p className="text-sm text-gray-500 font-normal">VAT calculated at checkout</p>
+                        <div className="text-2xl">${(total + 50).toFixed(2)}</div>
+                        <p className="text-sm text-gray-500 font-normal">Includes $50.00 shipping</p>
                       </div>
                     </div>
                   </div>

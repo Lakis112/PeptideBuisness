@@ -8,6 +8,7 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  imageUrl?: string;
 }
 
 interface CartStore {
@@ -48,7 +49,8 @@ const normalizeCartItems = (items: any[]): CartItem[] => {
     id: String(item.id || ''),
     name: String(item.name || ''),
     price: ensureNumber(item.price),
-    quantity: Number(item.quantity) || 1
+    quantity: Number(item.quantity) || 1,
+    imageUrl: item.imageUrl // ADD THIS
   }));
 };
 
@@ -128,7 +130,7 @@ export const useCart = create<CartStore>()(
         }
       },
       
-      addItem: async (product) => {
+      addItem: async (product: { id: string; name: string; price: number; quantity?: number; imageUrl?: string; }) => {
         const auth = await isAuthenticated();
         const price = ensureNumber(product.price);
         
@@ -141,7 +143,7 @@ export const useCart = create<CartStore>()(
               body: JSON.stringify({ 
                 ...product, 
                 price: price,
-                quantity: 1 
+                quantity: product.quantity || 1
               })
             });
             
@@ -168,15 +170,15 @@ export const useCart = create<CartStore>()(
         const existingItem = items.find(item => item.id === product.id);
         
         if (existingItem) {
-          const newItems = items.map(item =>
-            item.id === product.id
-              ? { 
-                  ...item, 
-                  quantity: item.quantity + 1,
-                  price: ensureNumber(item.price)
-                }
-              : item
-          );
+  const newItems = items.map(item =>
+    item.id === product.id
+      ? { 
+          ...item, 
+          quantity: item.quantity + (product.quantity || 1),  // Add the quantity from product page
+          price: ensureNumber(item.price)
+        }
+      : item
+  );
           const normalizedItems = normalizeCartItems(newItems);
           const total = normalizedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
           const itemCount = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -190,7 +192,8 @@ export const useCart = create<CartStore>()(
           const newItems = [...items, { 
             ...product, 
             price: price,
-            quantity: 1 
+            quantity: product.quantity || 1,
+            imageUrl: product.imageUrl
           }];
           const normalizedItems = normalizeCartItems(newItems);
           const total = normalizedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);

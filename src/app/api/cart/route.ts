@@ -26,12 +26,18 @@ export async function GET() {
     return NextResponse.json({ items: [] });
   }
 
-  const cartItems = await pool.query(
-    `SELECT product_id as id, product_name as name, price, quantity
-     FROM cart_items 
-     WHERE user_id = $1`,
-    [userId]
-  );
+ const cartItems = await pool.query(
+  `SELECT 
+    ci.product_id as id, 
+    ci.product_name as name, 
+    ci.price, 
+    ci.quantity,
+    p.image_url as "imageUrl"  -- ADD THIS
+   FROM cart_items ci
+   LEFT JOIN products p ON ci.product_id = p.id::text
+   WHERE ci.user_id = $1`,
+  [userId]
+);
 
   return NextResponse.json({ items: cartItems.rows });
 }
@@ -60,11 +66,17 @@ export async function POST(request: NextRequest) {
 
     // Get updated cart
     const cartItems = await pool.query(
-      `SELECT product_id as id, product_name as name, price, quantity
-       FROM cart_items 
-       WHERE user_id = $1`,
-      [userId]
-    );
+  `SELECT 
+    ci.product_id as id, 
+    ci.product_name as name, 
+    ci.price, 
+    ci.quantity,
+    p.image_url as "imageUrl"  -- ADD THIS
+   FROM cart_items ci
+   LEFT JOIN products p ON ci.product_id = p.id::text
+   WHERE ci.user_id = $1`,
+  [userId]
+);
 
     return NextResponse.json({ items: cartItems.rows });
 

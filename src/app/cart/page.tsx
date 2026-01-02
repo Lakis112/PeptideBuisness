@@ -9,6 +9,10 @@ export default function CartPage() {
   const { items, total, addItem, removeItem, updateQuantity, clearCart } = useCart();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+    // Add shipping fee
+  const shippingFee = 50;
+  const cartTotal = total + shippingFee;
 
   useEffect(() => {
     checkAuth();
@@ -45,7 +49,7 @@ export default function CartPage() {
           <div className="absolute -inset-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full blur-xl opacity-50"></div>
         </div>
         <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-          Your Research Cart is Empty
+          Your Cart is Empty
         </h2>
         <p className="text-gray-600 mb-8 text-lg max-w-md text-center">
           Begin your scientific inquiry with our pharmaceutical-grade peptides
@@ -69,10 +73,10 @@ export default function CartPage() {
         {/* Header */}
         <div className="mb-10 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Research Cart
+            Pharmaceutical Cart
           </h1>
           <p className="text-gray-600 text-lg">
-            Review your selected pharmaceutical-grade peptides
+            Review your selected pharmaceutical-grade products
           </p>
         </div>
 
@@ -118,15 +122,24 @@ export default function CartPage() {
                 className="group bg-white border border-gray-200 rounded-2xl p-6 flex items-center gap-6 shadow-sm hover:shadow-xl transition-all duration-300"
               >
                 {/* Product Image Placeholder */}
-                <div className="relative w-32 h-32 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl flex items-center justify-center border border-gray-200 group-hover:border-blue-300 transition-colors">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-xl"></div>
-                  <svg className="w-14 h-14 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-                  </svg>
-                  <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                    GMP
-                  </div>
-                </div>
+                {/* Product Image */}
+<div className="relative w-32 h-32 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl flex items-center justify-center border border-gray-200 group-hover:border-blue-300 transition-colors">
+  {item.imageUrl ? (
+    <img 
+      src={item.imageUrl} 
+      alt={item.name}
+      className="w-full h-full object-cover rounded-xl"
+    />
+  ) : (
+    <>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-xl"></div>
+      <svg className="w-14 h-14 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+      </svg>
+    </>
+  )}
+
+</div>
 
                 {/* Product Details */}
                 <div className="flex-1">
@@ -179,7 +192,7 @@ export default function CartPage() {
                         className="text-sm text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
                       >
                         <Trash2 className="h-3 w-3" />
-                        Remove from study
+                        Remove from cart
                       </button>
                     </div>
                   </div>
@@ -194,11 +207,11 @@ export default function CartPage() {
                 className="flex items-center gap-2 px-6 py-3 text-red-600 hover:text-red-800 font-medium hover:bg-red-50 rounded-xl transition-colors"
               >
                 <Trash2 className="h-4 w-4" />
-                Clear Entire Research Cart
+                Clear Entire Cart
               </button>
             </div>
           </div>
-
+          
           {/* Order Summary - Right Column (Sticky) */}
           <div className="lg:col-span-1">
             <div className="sticky top-8">
@@ -213,29 +226,22 @@ export default function CartPage() {
                     <span className="text-xl font-bold text-gray-900">${total.toFixed(2)}</span>
                   </div>
                   
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-gray-600">EU GMP Compliance</span>
-                    <span className="text-green-600 font-semibold">Included</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-gray-600">Analytical Documentation</span>
-                    <span className="text-green-600 font-semibold">Included</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center py-2 border-t border-gray-200 pt-4">
-                    <span className="text-gray-600">Priority Shipping</span>
-                    <span className="text-green-600 font-semibold">Free</span>
-                  </div>
-                  
+             
+                 <div className="flex justify-between items-center py-2 border-t border-gray-200 pt-4">
+  		<span className="text-gray-600">Priority Shipping</span>
+  		<span className="font-semibold">$50.00</span> {/* Changed */}
+		</div>
+              
                   <div className="border-t border-gray-200 pt-6">
-                    <div className="flex justify-between items-center">
-                      <span className="text-2xl font-bold text-gray-900">Total</span>
-                      <div>
-                        <div className="text-3xl font-bold text-gray-900">${total.toFixed(2)}</div>
-                        <p className="text-sm text-gray-500 text-right">VAT calculated at checkout</p>
-                      </div>
-                    </div>
+
+
+		<div className="flex justify-between items-center">
+  		<span className="text-2xl font-bold text-gray-900">Total</span>
+  		<div>
+    		<div className="text-3xl font-bold text-gray-900">${cartTotal.toFixed(2)}</div>
+   		 <p className="text-sm text-gray-500 text-right">VAT calculated at checkout</p>
+  		</div>
+		</div>
                   </div>
                 </div>
 

@@ -173,28 +173,39 @@ const sortedProducts = [...filteredProducts].sort((a, b) => {
             </div>
             
             {/* Featured Products */}
-            {featuredProducts.length > 0 && (
-              <div className="bg-white rounded-xl border p-6">
-                <h3 className="text-lg font-bold mb-4">Featured Products</h3>
-                <div className="space-y-4">
-                  {featuredProducts.map((product: any) => (
-                   <a 
-  key={product.id}
-  href={`/products/${product.slug || product.sku}`}
-  className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition"
->
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center">
-                        <span className="text-lg">🧪</span>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm line-clamp-1">{product.name}</h4>
-                        <p className="text-blue-600 font-bold">${product.price.toFixed(2)}</p>
-                      </div>
-                    </a>
-                  ))}
+              {featuredProducts.length > 0 && (
+        <div className="bg-white rounded-xl border p-6">
+          <h3 className="text-lg font-bold mb-4">Featured Products</h3>
+          <div className="space-y-4">
+            {featuredProducts.map((product: any) => (
+              <a 
+                key={product.id}
+                href={`/products/${product.slug || product.sku}`}
+                className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition"
+              >
+                {/* Image or placeholder */}
+                <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden">
+                  {product.imageUrl ? (
+                    <img 
+                      src={product.imageUrl} 
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+                      <span className="text-lg">🧪</span>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+                <div className="min-w-0">
+                  <h4 className="font-medium text-sm line-clamp-1">{product.name}</h4>
+                  <p className="text-blue-600 font-bold">${product.price?.toFixed(2)}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
             
             {/* Quality Assurance */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6">

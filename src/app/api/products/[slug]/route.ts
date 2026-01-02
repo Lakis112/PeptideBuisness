@@ -21,15 +21,17 @@ export async function GET(
         status,
         created_at,
         updated_at,
-        image_url as "imageUrl",  -- ← ADD THIS LINE
-        -- Add all required fields for ProductDetail
-        'Research' as dosage,
-        '1 vial' as quantity,
-        '99%' as purity,
-        '' as molecularWeight,
-        '' as sequence,
-        '' as halfLife,
-        '-20°C' as storage,
+        image_url as "imageUrl",
+        featured,
+	purity,
+        chemical_formula,
+        molecular_weight,
+        cas,
+        synonym,
+        dosage,
+        quantity,
+        halfLife,
+        storage,
         (stock > 0) as "inStock",
         -- Add originalPrice for potential discounts
         CASE 

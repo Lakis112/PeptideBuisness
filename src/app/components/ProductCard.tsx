@@ -51,7 +51,7 @@ export default function ProductCard({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent link navigation
     e.stopPropagation(); // Prevent event bubbling
-    addItem({ id, name, price });
+    addItem({ id, name, price, quantity: 1, imageUrl: imageUrl });
     toast.success('Added to cart', {
       description: `${name} has been added to your cart.`,
       icon: '🛒',

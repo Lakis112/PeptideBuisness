@@ -31,7 +31,12 @@ interface ProductDetailProps {
     halfLife?: string;
     storage: string;
     inStock: boolean;
+    featured?: boolean; 
     imageUrl?: string;
+    chemical_formula?: string;
+    synonym?: string;
+    cas?: string;
+    
   };
 }
 
@@ -55,26 +60,33 @@ export default function ProductDetail({ product, sku ,imageUrl }: ProductDetailP
     inStock: product.inStock !== undefined ? product.inStock : true
   };
 
-  const handleAddToCart = () => {
-    addItem({ 
-      id: safeProduct.id, 
-      name: safeProduct.name, 
-      price: safeProduct.price 
-    });
-    toast.success('Added to cart', {
-      description: `${safeProduct.name} has been added to your cart.`,
-      icon: '🛒',
-    });
-  };
+const [quantity, setQuantity] = useState(1);
 
+// Update handleAddToCart
+const handleAddToCart = () => {
+  console.log('Adding to cart:', { 
+    id: safeProduct.id, 
+    imageUrl: safeProduct.imageUrl,
+    product: safeProduct 
+  });
+
+  addItem({ 
+    id: safeProduct.id, 
+    name: safeProduct.name, 
+    price: safeProduct.price,
+    quantity: quantity, // Add quantity
+    imageUrl: safeProduct.imageUrl
+  });
+  toast.success('Added to cart', {
+    description: `${quantity}x ${safeProduct.name} added to cart.`,
+    icon: '🛒',
+  });
+};
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <div className="text-sm text-gray-600 mb-6">
-        <a href="/" className="hover:text-blue-600">Home</a>
-        <span className="mx-2">/</span>
-        <a href="/" className="hover:text-blue-600">Peptides</a>
-        <span className="mx-2">/</span>
+        
         <a href={`/products?category=${safeProduct.category}`} className="hover:text-blue-600">
           {safeProduct.category}
         </a>
@@ -124,11 +136,11 @@ export default function ProductDetail({ product, sku ,imageUrl }: ProductDetailP
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-3">
                 <Check className="h-4 w-4 text-green-600" />
-                <span>Cold-chain shipping included</span>
+                <span>Temperature controlled shipping</span>
               </div>
               <div className="flex items-center gap-3">
                 <Check className="h-4 w-4 text-green-600" />
-                <span>Ships within 24 hours</span>
+                <span>Ships within 48 hours</span>
               </div>
               <div className="flex items-center gap-3">
                 <Check className="h-4 w-4 text-green-600" />
@@ -184,15 +196,43 @@ export default function ProductDetail({ product, sku ,imageUrl }: ProductDetailP
             </div>
           </div>
 
+<div className="mb-12">
+  {/* Quantity Selector */}
+  <div className="flex items-center gap-4 mb-4">
+    <span className="font-medium">Quantity:</span>
+    <div className="flex items-center border rounded-lg">
+      <button 
+        onClick={() => setQuantity(q => Math.max(1, q - 1))}
+        className="px-4 py-2 text-gray-600 hover:bg-gray-50"
+      >
+        −
+      </button>
+      <span className="px-4 py-2 font-bold w-12 text-center">{quantity}</span>
+      <button 
+        onClick={() => setQuantity(q => q + 1)}
+        className="px-4 py-2 text-gray-600 hover:bg-gray-50"
+      >
+        +
+      </button>
+    </div>
+    <span className="text-gray-600">
+      Total: <span className="font-bold">${(safeProduct.price * quantity).toFixed(2)}</span>
+    </span>
+  </div>
+
+  {/* Add to Cart Button */}
+  <button 
+    onClick={handleAddToCart}
+    disabled={!safeProduct.inStock}
+    className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+  >
+    <ShoppingCart className="h-6 w-6" />
+    {safeProduct.inStock ? `Add ${quantity} to Cart` : 'Notify When Available'}
+  </button>
+</div>
+
           <div className="mb-12">
-            <button 
-              onClick={handleAddToCart}
-              disabled={!safeProduct.inStock}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-            >
-              <ShoppingCart className="h-6 w-6" />
-              {safeProduct.inStock ? 'Add to Cart' : 'Notify When Available'}
-            </button>
+            
             <div className="text-center mt-4 text-sm text-gray-600">
               🔒 Secure checkout • Discreet billing
             </div>
@@ -200,7 +240,7 @@ export default function ProductDetail({ product, sku ,imageUrl }: ProductDetailP
 
           <div className="border-b mb-6">
             <div className="flex space-x-8">
-              {['overview', 'specifications', 'protocols', 'coa'].map((tab) => (
+              {['specifications', 'coa'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setSelectedTab(tab)}
@@ -243,45 +283,37 @@ export default function ProductDetail({ product, sku ,imageUrl }: ProductDetailP
               </div>
             )}
 
-            {selectedTab === 'specifications' && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold">Specifications</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <tbody>
-                      <tr className="border-b">
-                        <td className="py-3 font-medium">Molecular Weight</td>
-                        <td className="py-3 text-gray-700">{safeProduct.molecularWeight || 'Available in COA'}</td>
-                      </tr>
-                      {safeProduct.sequence && (
-                        <tr className="border-b">
-                          <td className="py-3 font-medium">Amino Acid Sequence</td>
-                          <td className="py-3 text-gray-700 font-mono text-sm">{safeProduct.sequence}</td>
-                        </tr>
-                      )}
-                      {safeProduct.halfLife && (
-                        <tr className="border-b">
-                          <td className="py-3 font-medium">Half-life</td>
-                          <td className="py-3 text-gray-700">{safeProduct.halfLife}</td>
-                        </tr>
-                      )}
-                      <tr className="border-b">
-                        <td className="py-3 font-medium">Purity</td>
-                        <td className="py-3 text-gray-700">{safeProduct.purity} (HPLC-MS)</td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="py-3 font-medium">Storage</td>
-                        <td className="py-3 text-gray-700">{safeProduct.storage}</td>
-                      </tr>
-                      <tr>
-                        <td className="py-3 font-medium">Form</td>
-                        <td className="py-3 text-gray-700">Lyophilized powder</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+      {selectedTab === 'specifications' && (
+  <div className="space-y-6">
+    <h3 className="text-xl font-bold">Specifications</h3>
+    <div className="grid grid-cols-2 gap-4">
+      {safeProduct.chemical_formula && (
+        <div className="bg-white p-4 rounded-xl border">
+          <p className="text-gray-600 text-sm">Chemical Formula</p>
+          <p className="font-bold text-lg">{safeProduct.chemical_formula}</p>
+        </div>
+      )}
+      {safeProduct.molecularWeight && (
+        <div className="bg-white p-4 rounded-xl border">
+          <p className="text-gray-600 text-sm">Molecular Weight</p>
+          <p className="font-bold text-lg">{safeProduct.molecularWeight}</p>
+        </div>
+      )}
+      {safeProduct.cas && (
+        <div className="bg-white p-4 rounded-xl border">
+          <p className="text-gray-600 text-sm">CAS No</p>
+          <p className="font-bold text-lg">{safeProduct.cas}</p>
+        </div>
+      )}
+      {safeProduct.synonym && (
+        <div className="bg-white p-4 rounded-xl border">
+          <p className="text-gray-600 text-sm">Synonyms</p>
+          <p className="font-bold text-lg">{safeProduct.synonym}</p>
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
             {selectedTab === 'coa' && (
               <div className="space-y-6">
