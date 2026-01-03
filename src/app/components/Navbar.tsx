@@ -26,7 +26,7 @@ export default function Navbar() {
             .map(p => p.category)
             .filter(Boolean)
         )];
-        setCategories(uniqueCategories);
+        setCategories(uniqueCategories as string[]);
       })
       .catch(() => setCategories([]));
   }, []);
