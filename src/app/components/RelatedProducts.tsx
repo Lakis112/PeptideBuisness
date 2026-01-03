@@ -37,7 +37,7 @@ export default function RelatedProducts({ products, category }: RelatedProductsP
             sequence={product.sequence || ''}
             inStock={product.inStock !== undefined ? product.inStock : true}
             // Add optional fields if needed:
-            originalPrice={product.originalPrice}
+            original_price={product.original_price}
             casNumber={product.casNumber || ''}
             imageUrl={product.imageUrl}
           />
