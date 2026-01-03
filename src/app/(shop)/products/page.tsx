@@ -159,16 +159,15 @@ const sortedProducts = [...filteredProducts].sort((a, b) => {
                   All Products
                   <span className="float-right text-gray-500">{products.length}</span>
                 </a>
-                {categories.map((category) => (
-                  <a 
-                    key={category.id}
-                    href={`/products?category=${encodeURIComponent(category.name)}`}
-                    className={`block px-4 py-2 rounded-lg transition ${selectedCategory === category.name ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
-                  >
-                    {category.name}
-                    <span className="float-right text-gray-500">{category.count}</span>
-                  </a>
-                ))}
+                {categories.map((category: any) => (  // Add type annotation here
+  <a 
+    key={String(category.id)}  // Cast to string
+    href={`/products?category=${encodeURIComponent(category.name)}`}
+    className={`block px-4 py-2 rounded-lg transition ${selectedCategory === category.name ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+  >
+    {category.name}
+  </a>
+))}
               </div>
             </div>
             
