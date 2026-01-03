@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
                 email: newUser.rows[0].email 
             },
             process.env.JWT_SECRET!,
-            { expiresIn: process.env.JWT_EXPIRE || '7d' }
+            { expiresIn: process.env.JWT_EXPIRE || '7d' } as jwt.SignOptions 
         );
         
         // Set HTTP-only cookie
