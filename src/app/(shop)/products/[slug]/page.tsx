@@ -10,7 +10,7 @@ interface ProductPageProps {
 
 async function getProduct(slug: string) {
   try {
-    const response = await fetch(`http://localhost:3000/api/products/${slug}`, {
+    const response = await fetch(`/api/products/${slug}`, {
       next: { revalidate: 60 }
     });
     
@@ -34,7 +34,7 @@ async function getProduct(slug: string) {
 
 async function getProducts() {
   try {
-    const response = await fetch('http://localhost:3000/api/products', {
+    const response = await fetch('/api/products', {
       next: { revalidate: 60 }
     });
     
