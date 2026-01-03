@@ -13,7 +13,7 @@ interface CartItem {
 
 interface CartStore {
   items: CartItem[];
-  addItem: (product: { id: string; name: string; price: number }) => Promise<void>;
+  addItem: (product: { id: string; name: string; price: number; quantity?: number; imageUrl?: string; }) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
