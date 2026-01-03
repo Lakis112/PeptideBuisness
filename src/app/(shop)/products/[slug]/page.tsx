@@ -76,7 +76,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   <div className="min-h-screen bg-gray-50">
     <ProductDetail 
       product={product} 
-
+      sku={product.slug || product.sku}  // ← Add sku prop
       imageUrl={product.imageUrl}
     />
     <RelatedProducts 

@@ -13,10 +13,10 @@ export default function RelatedProducts({ products, category }: RelatedProductsP
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold mb-2">
-          Related <span className="text-blue-600">{category}</span> Peptides
+          Related <span className="text-blue-600">{category}</span> Products
         </h2>
         <p className="text-gray-600">
-          Other research compounds in the same category
+          Other compounds in the same category
         </p>
       </div>
       

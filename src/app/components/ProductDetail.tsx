@@ -36,13 +36,14 @@ interface ProductDetailProps {
     chemical_formula?: string;
     synonym?: string;
     cas?: string;
-    
   };
+  sku?: string;
+  imageUrl?: string;
 }
 
 export default function ProductDetail({ product, sku ,imageUrl }: ProductDetailProps) {
   const { addItem } = useCart();
-  const [selectedTab, setSelectedTab] = useState('overview');
+  const [selectedTab, setSelectedTab] = useState('specifications');
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
   
   // Ensure product has safe values
@@ -97,16 +98,48 @@ const handleAddToCart = () => {
       <div className="grid lg:grid-cols-2 gap-12">
         {/* Left Column */}
         <div>
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-12 mb-8 flex items-center justify-center">
-  {imageUrl ? (
-    <img 
-      src={imageUrl}
-      alt={product.name}
-      className="max-w-full max-h-96 object-contain rounded-lg"
-    />
-  ) : (
-    <div className="text-9xl">🧪</div>
+          <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 mb-8 flex items-center justify-center min-h-[400px] overflow-hidden">
+  {/* Featured Badge */}
+  {product.featured && (
+    <div className="absolute top-6 left-6 z-20">
+      <div className="relative">
+        <div className="absolute -inset-1 bg-gradient-to-r from-[#FF6BCB] via-[#9575CD] to-[#FF6BCB] rounded-full blur-sm opacity-75 animate-pulse"></div>
+        <div className="relative bg-gradient-to-r from-[#FF6BCB] to-[#9575CD] text-white px-4 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 shadow-2xl">
+          <span className="text-white">⭐ FEATURED</span>
+        </div>
+      </div>
+    </div>
   )}
+  
+  {/* Image Container */}
+  <div className="relative w-full h-full flex items-center justify-center p-4">
+    {imageUrl ? (
+      <div className="relative group">
+        {/* Glow effect on hover */}
+        <div className="absolute -inset-4 bg-gradient-to-r from-blue-200/30 to-purple-200/30 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+        {/* Image */}
+        <img 
+          src={imageUrl}
+          alt={product.name}
+          className="relative max-w-full max-h-80 object-contain rounded-xl shadow-2xl transform group-hover:scale-105 transition-transform duration-500"
+        />
+        {/* Watermark overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent rounded-xl"></div>
+      </div>
+    ) : (
+      <div className="relative">
+        <div className="w-48 h-48 rounded-3xl bg-gradient-to-br from-white to-gray-50 shadow-inner flex items-center justify-center border-2 border-gray-100">
+          <div className="text-8xl">🧪</div>
+        </div>
+        <div className="absolute -top-2 -right-2 w-16 h-16 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full blur-lg"></div>
+        <div className="absolute -bottom-2 -left-2 w-16 h-16 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full blur-lg"></div>
+      </div>
+    )}
+  </div>
+  
+  {/* Corner accents */}
+  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-100/20 to-transparent"></div>
+  <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-purple-100/20 to-transparent"></div>
 </div>
 
           <div className="grid grid-cols-2 gap-4 mb-8">
@@ -253,35 +286,7 @@ const handleAddToCart = () => {
           </div>
 
           <div className="prose max-w-none">
-            {selectedTab === 'overview' && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold">Product Overview</h3>
-                <p>
-                  {safeProduct.name} is a research-grade peptide provided in lyophilized form. 
-                  Each batch undergoes rigorous third-party testing to verify purity and identity.
-                </p>
-                <div className="bg-blue-50 p-6 rounded-xl">
-                  <h4 className="font-bold mb-3 flex items-center gap-2">
-                    <Beaker className="h-5 w-5" />
-                    Research Applications
-                  </h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span>Laboratory research and development</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span>In vitro and ex vivo studies</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span>Mechanism of action research</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            )}
+            
 
       {selectedTab === 'specifications' && (
   <div className="space-y-6">

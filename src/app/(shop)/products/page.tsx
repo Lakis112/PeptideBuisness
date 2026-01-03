@@ -274,8 +274,8 @@ const sortedProducts = [...filteredProducts].sort((a, b) => {
                     molecularWeight={product.molecularWeight || ''}
                     sequence={product.sequence || ''}
                     inStock={product.inStock !== undefined ? product.inStock : true}
-                    isFeatured={product.isFeatured || false}
-                    originalPrice={product.originalPrice}
+                    isFeatured={product.featured || false}
+                    original_price={product.original_price}
                     casNumber={product.casNumber || ''}
                     imageUrl={product.imageUrl} 
                   />

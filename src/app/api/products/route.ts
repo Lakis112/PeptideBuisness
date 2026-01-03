@@ -10,6 +10,7 @@ export async function GET() {
     name,
     sku as slug,
     price::float as price,
+    original_price,
     description,
     category,
     stock,
