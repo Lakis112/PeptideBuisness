@@ -17,6 +17,7 @@ interface Product {
   stock?: number;
   inStock?: boolean;
   imageUrl?: string;
+  molecularWeight?: string; // Add this
 }
 
 function HomeContent() {
