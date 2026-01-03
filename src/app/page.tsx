@@ -39,7 +39,7 @@ function HomeContent() {
           
           // Extract unique categories
           const uniqueCategories = ['all', ...new Set(data.map((p: Product) => p.category).filter(Boolean))];
-          setCategories(uniqueCategories);
+          setCategories(uniqueCategories as string[]);
         }
       } catch (error) {
         console.error('Failed to fetch products:', error);
