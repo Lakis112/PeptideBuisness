@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         const token = jwt.sign(
             { id: user.id, email: user.email },
             process.env.JWT_SECRET!,
-            { expiresIn: process.env.JWT_EXPIRE || '7d' }
+            { expiresIn: process.env.JWT_EXPIRE || '7d' } as jwt.SignOptions 
         );
         
        // AFTER creating the JWT token, create response:
