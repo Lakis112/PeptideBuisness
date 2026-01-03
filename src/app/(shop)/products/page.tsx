@@ -18,7 +18,11 @@ interface ProductsPageProps {
 
 async function getProducts() {
   try {
-    const response = await fetch('/api/products', {
+
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const apiUrl = `${baseUrl}/api/products`;
+
+    const response = await fetch(apiUrl, {
       next: { revalidate: 60 }
     });
     
