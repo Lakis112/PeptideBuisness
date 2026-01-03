@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import pool from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
     try {
         const cookieStore = await cookies();
