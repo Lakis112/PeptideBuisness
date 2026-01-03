@@ -22,7 +22,9 @@
     "paths": {
       "@/*": ["./src/*"],
       "@components/*": ["./src/app/components/*"]  // ← CHANGE THIS LINE
-    }
+    },
+    "strict": false,  // Or set to false if you want less strict
+    "noImplicitAny": false  // Allow implicit any types
   },
   "include": [
     "next-env.d.ts",

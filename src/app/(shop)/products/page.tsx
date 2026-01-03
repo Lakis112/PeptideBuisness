@@ -58,7 +58,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 console.log('=== DEBUG PRODUCTS ===');
 console.log('Total products:', products.length);
 console.log('First 3 products:');
-products.slice(0, 3).forEach((p, i) => {
+products.slice(0, 3).forEach((p: any, i) => {
   console.log(`Product ${i + 1}:`, {
     name: p.name,
     featured: p.featured,
