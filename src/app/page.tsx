@@ -313,7 +313,6 @@ function HomeContent() {
       quantity="1 vial"
       purity={product.purity || '99%'}
       molecularWeight={product.molecularWeight || ''}
-      sequence={product.sequence || ''}
       inStock={product.inStock !== undefined ? product.inStock : (product.stock > 0)}
       isFeatured={false}
       imageUrl={product.imageUrl}
