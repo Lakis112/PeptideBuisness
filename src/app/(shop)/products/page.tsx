@@ -195,7 +195,7 @@ const sortedProducts = [...filteredProducts].sort((a, b) => {
             {featuredProducts.map((product: any) => (
               <a 
                 key={product.id}
-                href={`/products/${product.slug || product.sku}`}
+                href={`/products/${product.slug}`}
                 className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition"
               >
                 {/* Image or placeholder */}
@@ -278,7 +278,7 @@ const sortedProducts = [...filteredProducts].sort((a, b) => {
                   <ProductCard 
                     key={product.id} 
                     id={product.id}
-                    sku={product.slug || product.sku} 
+                    sku={product.slug} 
                     name={product.name}
                     description={product.description}
                     price={product.price}

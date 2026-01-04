@@ -10,10 +10,15 @@ interface ProductPageProps {
 
 async function getProduct(slug: string) {
   try {
-    const response = await fetch(`/api/products/${slug}`, {
+    // Use absolute URL
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://peptide-buisness.vercel.app' 
+      : 'http://localhost:3000';
+    
+    const response = await fetch(`${baseUrl}/api/products/${slug}`, {
       next: { revalidate: 60 }
     });
-    
+
     if (!response.ok) return null;
     const data = await response.json();
     
@@ -34,7 +39,12 @@ async function getProduct(slug: string) {
 
 async function getProducts() {
   try {
-    const response = await fetch('/api/products', {
+    // Use absolute URL
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://peptide-buisness.vercel.app' 
+      : 'http://localhost:3000';
+    
+    const response = await fetch(`${baseUrl}/api/products`, {
       next: { revalidate: 60 }
     });
     
