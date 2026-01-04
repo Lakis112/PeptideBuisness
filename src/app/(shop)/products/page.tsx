@@ -24,7 +24,7 @@ async function getProducts() {
     
     if (process.env.NODE_ENV === 'production') {
       // In production (Vercel)
-      baseUrl = 'https://your-vercel-app-name.vercel.app';
+      baseUrl = 'https://peptide-buisness-16t3dh93x-lakis112s-projects.vercel.app/';
     } else {
       // In development (localhost)
       baseUrl = 'http://localhost:3000';
