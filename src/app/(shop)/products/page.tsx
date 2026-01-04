@@ -18,8 +18,20 @@ interface ProductsPageProps {
 
 async function getProducts() {
   try {
+    
+    // Determine the base URL
+    let baseUrl;
+    
+    if (process.env.NODE_ENV === 'production') {
+      // In production (Vercel)
+      baseUrl = 'https://your-vercel-app-name.vercel.app';
+    } else {
+      // In development (localhost)
+      baseUrl = 'http://localhost:3000';
+    }
+     console.log('Fetching from:', `${baseUrl}/api/products`);
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    //const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const apiUrl = `${baseUrl}/api/products`;
 
     const response = await fetch(apiUrl, {
