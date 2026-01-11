@@ -2,33 +2,78 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Menu, X, ChevronDown, ChevronRight, Droplets, FlaskConical, Package, Shield } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import SearchBar from './SearchBar';
 import UserMenu from './UserMenu';
+
+interface Category {
+  id: number;
+  name: string;
+  parent_id: number | null;
+}
+
+interface MainCategory extends Category {
+  subcategories: Category[];
+  icon: React.ReactNode;
+}
+
+// Icon mapping for each category
+const categoryIcons: Record<string, React.ReactNode> = {
+  'AAS': <Droplets className="h-4 w-4" />,
+  'Peptides': <FlaskConical className="h-4 w-4" />,
+  'Non Peptide Products': <Package className="h-4 w-4" />,
+  'Ancillaries': <Shield className="h-4 w-4" />
+};
 
 export default function Navbar() {
   const { items } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProductsOpen, setIsProductsOpen] = useState(false);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<MainCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Fetch categories from existing products API
+  // Fetch categories with hierarchy
   useEffect(() => {
-    fetch('/api/products')
-      .then(res => res.json())
-      .then(products => {
-        // Extract unique categories from products
-        const uniqueCategories = [...new Set(
-          products
-            .map(p => p.category)
-            .filter(Boolean)
-        )];
-        setCategories(uniqueCategories as string[]);
-      })
-      .catch(() => setCategories([]));
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/categories');
+        const data: Category[] = await res.json();
+        
+        // Organize categories into hierarchy
+        const mainCategories = data.filter(cat => cat.parent_id === null);
+        const subCategories = data.filter(cat => cat.parent_id !== null);
+        
+        // Define desired order: Peptides, AAS, Non Peptide Products, Ancillaries
+        const desiredOrder = ['Peptides', 'AAS', 'Non Peptide Products', 'Ancillaries'];
+        
+        // Sort main categories according to desired order
+        const sortedMainCategories = mainCategories.sort((a, b) => {
+          const indexA = desiredOrder.indexOf(a.name);
+          const indexB = desiredOrder.indexOf(b.name);
+          // If not in desired order, put at the end
+          if (indexA === -1) return 1;
+          if (indexB === -1) return -1;
+          return indexA - indexB;
+        });
+        
+        const organized = sortedMainCategories.map(mainCat => ({
+          ...mainCat,
+          subcategories: subCategories.filter(sub => sub.parent_id === mainCat.id),
+          icon: categoryIcons[mainCat.name] || <Package className="h-4 w-4" />
+        }));
+        
+        setCategories(organized);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchCategories();
   }, []);
 
   // Hover handlers
@@ -39,12 +84,12 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Logo & Brand */}
+          {/* Logo & Brand - KEEP ORIGINAL */}
           <div className="flex items-center mr-auto pr-8">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-20 h-20 shrink-0">
                 <img 
-                  src="/logo.jpg" 
+                  src="/logo.png" 
                   alt="MMN Pharmaceuticals" 
                   className="h-full w-full object-contain p-1.5"
                 />
@@ -65,7 +110,7 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - KEEP ORIGINAL BUT UPDATE DROPDOWN */}
           <nav className="hidden lg:flex items-center space-x-1">
             <Link 
               href="/" 
@@ -74,7 +119,7 @@ export default function Navbar() {
               Home
             </Link>
             
-            {/* Products Dropdown with HOVER */}
+            {/* Professional Products Mega Dropdown */}
             <div 
               className="relative"
               onMouseEnter={handleMouseEnter}
@@ -87,36 +132,93 @@ export default function Navbar() {
                 <ChevronDown className={`w-4 h-4 transition-transform ${isProductsOpen ? 'rotate-180' : ''}`} />
               </button>
               
-              {isProductsOpen && (
-                <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
-                  <Link 
-                    href="/products" 
-                    className="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    onClick={() => setIsProductsOpen(false)}
-                  >
-                    <div className="font-medium">All Products</div>
-                    <div className="text-xs text-gray-500 mt-1">Complete pharmaceutical catalog</div>
-                  </Link>
+              {isProductsOpen && !isLoading && (
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 w-[1000px] bg-white rounded-2xl shadow-2xl border border-gray-100 py-8 z-50">
+                  {/* Top gradient bar */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-t-2xl"></div>
                   
-                  {categories.length > 0 && (
-                    <>
-                      <div className="border-t border-gray-100 my-2"></div>
-                      {categories.map((category, index) => (
+                  <div className="grid grid-cols-4 gap-8 px-10">
+                    {categories.map((category) => (
+                      <div key={category.id} className="space-y-4">
+                        <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+                          <div className="p-2 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                            {category.icon}
+                          </div>
+                          <Link 
+                            href={`/products?category=${encodeURIComponent(category.name)}`}
+                            className="text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors group/item"
+                            onClick={() => setIsProductsOpen(false)}
+                          >
+                            <span className="relative">
+                              {category.name}
+                              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover/item:w-full transition-all duration-300"></span>
+                            </span>
+                          </Link>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          {category.subcategories.length > 0 ? (
+                            <>
+                              {category.subcategories.map((sub) => (
+                                <Link 
+                                  key={sub.id}
+                                  href={`/products?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(sub.name)}`}
+                                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-white rounded-lg px-3 py-2.5 transition-all group/sub"
+                                  onClick={() => setIsProductsOpen(false)}
+                                >
+                                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full group-hover/sub:bg-blue-500 group-hover/sub:scale-125 transition-all"></div>
+                                  <span className="flex-1">{sub.name}</span>
+                                  <ChevronRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover/sub:opacity-100 group-hover/sub:translate-x-0 transition-all" />
+                                </Link>
+                              ))}
+                              <Link 
+                                href={`/products?category=${encodeURIComponent(category.name)}`}
+                                className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 mt-4 pt-3 border-t border-gray-100"
+                                onClick={() => setIsProductsOpen(false)}
+                              >
+                                <span>View all {category.name}</span>
+                                <ChevronRight className="w-4 h-4" />
+                              </Link>
+                            </>
+                          ) : (
+                            <Link 
+                              href={`/products?category=${encodeURIComponent(category.name)}`}
+                              className="block text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2.5 transition-colors italic"
+                              onClick={() => setIsProductsOpen(false)}
+                            >
+                              Explore {category.name}
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Bottom CTA Section */}
+                  <div className="mt-10 pt-8 border-t border-gray-100 px-10">
+                    <div className="bg-gradient-to-r from-blue-50 via-white to-cyan-50 rounded-xl p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900">Complete Product Catalog</h3>
+                          <p className="text-sm text-gray-600 mt-1">Browse our full range of pharmaceutical-grade products</p>
+                        </div>
                         <Link 
-                          key={index}
-                          href={`/products?category=${encodeURIComponent(category)}`}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                          href="/products" 
+                          className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-cyan-700 shadow-lg hover:shadow-xl transition-all hover:scale-105"
                           onClick={() => setIsProductsOpen(false)}
                         >
-                          {category}
+                          <ShoppingCart className="h-5 w-5" />
+                          View All Products
+                          <ChevronRight className="h-5 w-5" />
                         </Link>
-                      ))}
-                    </>
-                  )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
             
+            {/* KEEP ORIGINAL LINKS */}
             <Link 
               href="/quality" 
               className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -139,7 +241,7 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          {/* Right Section: Search, User, Cart */}
+          {/* Right Section: Search, User, Cart - KEEP ORIGINAL */}
           <div className="flex items-center gap-6 ml-8">
             <SearchBar variant="navbar" placeholder="Search peptides..." />
             
@@ -169,10 +271,10 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - KEEP ORIGINAL BUT UPDATE CATEGORY ORDER */}
         {isMenuOpen && (
           <div className="lg:hidden border-t border-gray-200 py-4">
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-1">
               <Link 
                 href="/" 
                 className="px-4 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
@@ -181,7 +283,7 @@ export default function Navbar() {
                 Home
               </Link>
               
-              {/* Mobile Products Dropdown */}
+              {/* Mobile Products Dropdown - UPDATE WITH ICONS */}
               <div className="px-4">
                 <button
                   onClick={() => setIsProductsOpen(!isProductsOpen)}
@@ -191,36 +293,64 @@ export default function Navbar() {
                   <ChevronDown className={`w-4 h-4 transition-transform ${isProductsOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
-                {isProductsOpen && (
-                  <div className="mt-2 ml-4 space-y-2">
-                    <Link 
-                      href="/products" 
-                      className="block py-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
-                      onClick={() => {
-                        setIsProductsOpen(false);
-                        setIsMenuOpen(false);
-                      }}
-                    >
-                      All Products
-                    </Link>
+                {isProductsOpen && !isLoading && (
+                  <div className="mt-2 ml-4 space-y-4">
+                    {categories.map((category) => (
+                      <div key={category.id} className="space-y-2">
+                        <Link 
+                          href={`/products?category=${encodeURIComponent(category.name)}`}
+                          className="flex items-center gap-2 text-base font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                          onClick={() => {
+                            setIsProductsOpen(false);
+                            setIsMenuOpen(false);
+                          }}
+                        >
+                          <div className="p-1.5 bg-blue-50 rounded">
+                            {category.icon}
+                          </div>
+                          {category.name}
+                        </Link>
+                        
+                        {category.subcategories.length > 0 && (
+                          <div className="ml-8 space-y-1">
+                            {category.subcategories.map((sub) => (
+                              <Link 
+                                key={sub.id}
+                                href={`/products?subcategory=${encodeURIComponent(sub.name)}`}
+                                className="flex items-center gap-2 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                                onClick={() => {
+                                  setIsProductsOpen(false);
+                                  setIsMenuOpen(false);
+                                }}
+                              >
+                                <div className="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>
+                                {sub.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                     
-                    {categories.map((category, index) => (
+                    {/* View All Products in Mobile */}
+                    <div className="pt-4 border-t border-gray-100">
                       <Link 
-                        key={index}
-                        href={`/products?category=${encodeURIComponent(category)}`}
-                        className="block py-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
+                        href="/products" 
+                        className="inline-flex items-center text-blue-600 font-medium"
                         onClick={() => {
                           setIsProductsOpen(false);
                           setIsMenuOpen(false);
                         }}
                       >
-                        {category}
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        View All Products
                       </Link>
-                    ))}
+                    </div>
                   </div>
                 )}
               </div>
               
+              {/* KEEP ORIGINAL MOBILE LINKS */}
               <Link 
                 href="/quality" 
                 className="px-4 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
@@ -245,13 +375,13 @@ export default function Navbar() {
                 Contact
               </Link>
 
-              <div className="px-4 pt-2 border-t border-gray-100">
+              <div className="px-4 pt-4 border-t border-gray-100">
                 <div className="lg:hidden">
                   <UserMenu />
                 </div>
               </div>
               
-              <div className="px-4 pt-2">
+              <div className="px-4 pt-4">
                 <SearchBar variant="navbar" placeholder="Search products..." />
               </div>
             </div>

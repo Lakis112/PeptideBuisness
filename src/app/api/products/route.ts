@@ -4,33 +4,36 @@ import pool from '@/lib/db';
 
 export async function GET() {
   try {
-    const result = await pool.query(`
+    // In /app/api/products/route.ts - Replace the entire query with:
+const result = await pool.query(`
   SELECT 
-    id::text as id,
-    name,
-    sku as slug,
-    price::float as price,
-    original_price,
-    description,
-    category,
-    stock,
-    status,
-    created_at,
-    updated_at,
-    image_url as "imageUrl",
-    featured, -- Your actual featured column
-    -- Add default values for missing fields
-    '' as dosage,
-    '1 vial' as quantity,
-    '99%' as purity,
-    '' as molecularWeight,
-    '' as sequence,
-    '-20°C' as storage,
-    (stock > 0) as "inStock"
-    -- REMOVED: (price > 100) as "isFeatured" -- This was overriding your real featured column
-  FROM products 
-  WHERE status = 'active'
-  ORDER BY created_at DESC
+    p.id::text as id,
+    p.name,
+    p.sku as slug,
+    p.price::float as price,
+    p.original_price,
+    p.description,
+    c.name as category,  -- Get category name from categories table
+    c.name as subcategory,
+    parent.name as maincategory,
+    p.stock,
+    p.status,
+    p.created_at,
+    p.updated_at,
+    p.image_url as "imageUrl",
+    p.featured,
+    p.dosage,
+    p.quantity,
+    p.purity || '%' as purity,  -- Add % sign
+    p.molecular_weight as "molecularWeight",
+    p.cas as "casNumber",
+    p.storage,
+    (p.stock > 0) as "inStock"
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN categories parent ON c.parent_id = parent.id
+  WHERE p.status = 'active'
+  ORDER BY p.created_at DESC
 `);
 
     return NextResponse.json(result.rows);
