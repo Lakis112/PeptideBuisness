@@ -1,4 +1,4 @@
-///api/products/[slug]/route.ts - SIMPLIFIED VERSION
+// /api/products/[slug]/route.ts - UPDATED
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
@@ -11,35 +11,39 @@ export async function GET(
     
     const result = await pool.query(
       `SELECT 
-        id::text as id,
-        name,
-        sku,
-        price::float as price,
-        description,
-        category,
-        stock,
-        status,
-        created_at,
-        updated_at,
-        image_url as "imageUrl",
-        featured,
-	purity,
-        chemical_formula,
-        molecular_weight,
-        cas,
-        synonym,
-        dosage,
-        quantity,
-        halfLife,
-        storage,
-        (stock > 0) as "inStock",
+        p.id::text as id,
+        p.name,
+        p.sku,
+        p.price::float as price,
+        p.description,
+        c.name as category,
+        COALESCE(parent.name, c.name) as maincategory,
+        c.name as subcategory,
+        p.stock,
+        p.status,
+        p.created_at,
+        p.updated_at,
+        p.image_url as "imageUrl",
+        p.featured,
+        p.purity,
+        p.chemical_formula,
+        p.molecular_weight,
+        p.cas,
+        p.synonym,
+        p.dosage,
+        p.quantity,
+        p.halfLife,
+        p.storage,
+        (p.stock > 0) as "inStock",
         -- Add originalPrice for potential discounts
         CASE 
-          WHEN price > 200 THEN (price * 1.15)::float
+          WHEN p.price > 200 THEN (p.price * 1.15)::float
           ELSE NULL::float
         END as "originalPrice"
-      FROM products 
-      WHERE sku = $1 AND status = 'active'`,  // ← Only match by sku
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories parent ON c.parent_id = parent.id
+      WHERE p.sku = $1 AND p.status = 'active'`,
       [slug]
     );
 

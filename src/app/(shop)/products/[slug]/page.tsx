@@ -78,10 +78,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
   
+  // DEBUG - Add these 4 lines
+  console.log('Current product category:', product.category);
+  console.log('All products count:', products.length);
+  console.log('Sample products:', products.slice(0, 3).map(p => ({ id: p.id, category: p.category, name: p.name })));
+
   const relatedProducts = products
-    .filter((p: any) => p.category === product.category && p.id !== product.id)
+    .filter((p: any) => {
+      const isMatch = p.category === product.category && p.id !== product.id;
+      console.log(`Product ${p.id} (${p.category}) matches? ${isMatch}`);
+      return isMatch;
+    })
     .slice(0, 4);
 
+console.log('Related products found:', relatedProducts.length); // Add this line
+      
   return (
   <div className="min-h-screen bg-gray-50">
     <ProductDetail 
@@ -98,21 +109,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 );
 }
 
-// FIXED: Generate static paths with proper error handling
-export async function generateStaticParams() {
-  try {
-    const products = await getProducts();
-    
-    return products
-      .filter((product: any) => product.sku && typeof product.sku === 'string')
-      .map((product: any) => ({
-        slug: product.sku,
-      }));
-  } catch (error) {
-    console.error('Error generating static params:', error);
-    return [];
-  }
-}
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function generateMetadata({ params }: ProductPageProps) {
   const { slug } = await params;
