@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ShoppingCart, Menu, X, ChevronDown, ChevronRight, Droplets, FlaskConical, Package, Shield } from 'lucide-react';
 import { useCart } from '@/lib/cart';
@@ -32,6 +32,7 @@ export default function Navbar() {
   const [isProductsOpen, setIsProductsOpen] = useState(false);
   const [categories, setCategories] = useState<MainCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -76,15 +77,37 @@ export default function Navbar() {
     fetchCategories();
   }, []);
 
-  // Hover handlers
-  const handleMouseEnter = () => setIsProductsOpen(true);
-  const handleMouseLeave = () => setIsProductsOpen(false);
+  // Improved hover handlers with delay
+  const handleMouseEnter = () => {
+    // Clear any pending close timeout
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setIsProductsOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    // Add a small delay before closing to allow mouse movement
+    closeTimeoutRef.current = setTimeout(() => {
+      setIsProductsOpen(false);
+    }, 150); // 150ms delay
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Logo & Brand - KEEP ORIGINAL */}
+          {/* Logo & Brand */}
           <div className="flex items-center mr-auto pr-8">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-20 h-20 shrink-0">
@@ -110,7 +133,7 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop Navigation - KEEP ORIGINAL BUT UPDATE DROPDOWN */}
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1">
             <Link 
               href="/" 
@@ -119,21 +142,22 @@ export default function Navbar() {
               Home
             </Link>
             
-            {/* Professional Products Mega Dropdown */}
+            {/* Products Dropdown with clickable button */}
             <div 
               className="relative"
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              <button
+              <Link
+                href="/products"
                 className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 Products
                 <ChevronDown className={`w-4 h-4 transition-transform ${isProductsOpen ? 'rotate-180' : ''}`} />
-              </button>
+              </Link>
               
               {isProductsOpen && !isLoading && (
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 w-[1000px] bg-white rounded-2xl shadow-2xl border border-gray-100 py-8 z-50">
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-[1000px] bg-white rounded-2xl shadow-2xl border border-gray-100 py-8 z-50">
                   {/* Top gradient bar */}
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-t-2xl"></div>
                   
@@ -218,7 +242,6 @@ export default function Navbar() {
               )}
             </div>
             
-            {/* KEEP ORIGINAL LINKS */}
             <Link 
               href="/quality" 
               className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -241,7 +264,7 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          {/* Right Section: Search, User, Cart - KEEP ORIGINAL */}
+          {/* Right Section: Search, User, Cart */}
           <div className="flex items-center gap-6 ml-8">
             <SearchBar variant="navbar" placeholder="Search peptides..." />
             
@@ -271,7 +294,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu - KEEP ORIGINAL BUT UPDATE CATEGORY ORDER */}
+        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="lg:hidden border-t border-gray-200 py-4">
             <div className="flex flex-col space-y-1">
@@ -283,7 +306,7 @@ export default function Navbar() {
                 Home
               </Link>
               
-              {/* Mobile Products Dropdown - UPDATE WITH ICONS */}
+              {/* Mobile Products Dropdown */}
               <div className="px-4">
                 <button
                   onClick={() => setIsProductsOpen(!isProductsOpen)}
@@ -350,7 +373,6 @@ export default function Navbar() {
                 )}
               </div>
               
-              {/* KEEP ORIGINAL MOBILE LINKS */}
               <Link 
                 href="/quality" 
                 className="px-4 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"

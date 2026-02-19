@@ -4,12 +4,20 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { 
   ShoppingCart, 
-  Thermometer, 
   Shield, 
   FileText,
-  Beaker
+  CheckCircle,
+  TrendingUp,
+  Package,
+  Clock,
+  Truck,
+  Lock,
+  Award,
+  ChevronRight,
+  Info
 } from 'lucide-react';
 import { useCart } from '@/lib/cart';
+import Link from 'next/link';
 
 interface ProductDetailProps {
   product: {
@@ -17,14 +25,14 @@ interface ProductDetailProps {
     name: string;
     description: string;
     price: number;
-    originalPrice?: number;
+    original_price?: number;
     category: string;
     maincategory?: string;
     subcategory?: string;
     dosage: string;
     quantity: string;
     purity: string;
-    molecular_weight?: string;
+    molecularWeight?: string;
     sequence?: string;
     halflife?: string;
     storage: string;
@@ -44,12 +52,15 @@ export default function ProductDetail({ product, sku, imageUrl }: ProductDetailP
   const [selectedTab, setSelectedTab] = useState('specifications');
   const [quantity, setQuantity] = useState(1);
   
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+  const hasDiscount = product.original_price && product.original_price > product.price;
+  const discountPercent = hasDiscount 
+    ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+    : 0;
   
   const safeProduct = {
     ...product,
     price: product.price || 0,
-    originalPrice: product.originalPrice || product.price || 0,
+    original_price: product.original_price || 0,
     name: product.name || 'Unnamed Product',
     description: product.description || '',
     category: product.category || 'Uncategorized',
@@ -59,17 +70,14 @@ export default function ProductDetail({ product, sku, imageUrl }: ProductDetailP
     purity: product.purity || '',
     storage: product.storage || '',
     inStock: product.inStock !== undefined ? product.inStock : true,
-    molecular_weight: product.molecular_weight,
-    halflife: product.halflife
+    molecularWeight: product.molecularWeight,
+    halflife: product.halflife,
+    cas: product.cas,
+    chemical_formula: product.chemical_formula,
+    synonym: product.synonym
   };
 
   const handleAddToCart = () => {
-    console.log('Adding to cart:', { 
-      id: safeProduct.id, 
-      imageUrl: safeProduct.imageUrl,
-      product: safeProduct 
-    });
-
     addItem({ 
       id: safeProduct.id, 
       name: safeProduct.name, 
@@ -85,267 +93,358 @@ export default function ProductDetail({ product, sku, imageUrl }: ProductDetailP
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="bg-gray-50">
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-600 mb-6">
-        <a href={`/products?category=${safeProduct.category}`} className="hover:text-blue-600">
-          {safeProduct.category}
-        </a>
-        <span className="mx-2">/</span>
-        <span className="text-gray-900 font-medium">{safeProduct.name}</span>
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Link href="/products" className="hover:text-blue-600 transition-colors">Products</Link>
+            <ChevronRight className="h-4 w-4" />
+            {safeProduct.maincategory && (
+              <>
+                <Link 
+                  href={`/products?category=${safeProduct.maincategory}`}
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  {safeProduct.maincategory}
+                </Link>
+                <ChevronRight className="h-4 w-4" />
+              </>
+            )}
+            {safeProduct.category && safeProduct.category !== safeProduct.maincategory && (
+              <>
+                <Link 
+                  href={`/products?category=${safeProduct.maincategory}&subcategory=${safeProduct.category}`}
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  {safeProduct.category}
+                </Link>
+                <ChevronRight className="h-4 w-4" />
+              </>
+            )}
+            <span className="text-gray-900 font-medium">{safeProduct.name}</span>
+          </div>
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-12">
-        {/* Left Column - Image */}
-        <div>
-          <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 mb-8 flex items-center justify-center min-h-[400px] overflow-hidden">
-            {product.featured && (
-              <div className="absolute top-6 left-6 z-20">
-                <div className="relative">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-[#FF6BCB] via-[#9575CD] to-[#FF6BCB] rounded-full blur-sm opacity-75 animate-pulse"></div>
-                  <div className="relative bg-gradient-to-r from-[#FF6BCB] to-[#9575CD] text-white px-4 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 shadow-2xl">
-                    <span className="text-white">⭐ FEATURED</span>
+      {/* Main Product Section */}
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid lg:grid-cols-2 gap-12">
+          {/* Left Column - Image */}
+          <div className="space-y-6">
+            <div className="relative bg-white rounded-2xl border border-gray-200 p-8 overflow-hidden">
+              {/* Badges */}
+              <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                {product.featured && (
+                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1.5 rounded-lg shadow-lg">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    <span className="text-xs font-bold tracking-wide">BESTSELLER</span>
                   </div>
-                </div>
+                )}
+                {hasDiscount && (
+                  <div className="bg-red-600 text-white px-3 py-1.5 rounded-lg shadow-md">
+                    <span className="text-xs font-bold">-{discountPercent}%</span>
+                  </div>
+                )}
               </div>
-            )}
-            
-            <div className="relative w-full h-full flex items-center justify-center p-4">
-              {imageUrl ? (
-                <div className="relative group">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-blue-200/30 to-purple-200/30 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+
+              {/* Image */}
+              <div className="flex items-center justify-center min-h-[400px]">
+                {imageUrl ? (
                   <img 
                     src={imageUrl}
                     alt={product.name}
-                    className="relative max-w-full max-h-80 object-contain rounded-xl shadow-2xl transform group-hover:scale-105 transition-transform duration-500"
+                    className="max-w-full max-h-96 object-contain"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent rounded-xl"></div>
-                </div>
-              ) : (
-                <div className="relative">
-                  <div className="w-48 h-48 rounded-3xl bg-gradient-to-br from-white to-gray-50 shadow-inner flex items-center justify-center border-2 border-gray-100">
-                    <div className="text-8xl">🧪</div>
+                ) : (
+                  <div className="w-64 h-64 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center border border-gray-200">
+                    <Package className="h-24 w-24 text-gray-400" />
                   </div>
-                  <div className="absolute -top-2 -right-2 w-16 h-16 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full blur-lg"></div>
-                  <div className="absolute -bottom-2 -left-2 w-16 h-16 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full blur-lg"></div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-            
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-100/20 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-purple-100/20 to-transparent"></div>
-          </div>
-        </div>
 
-        {/* Right Column - Product Details */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-              {safeProduct.maincategory}
-            </span>
-            {safeProduct.category && safeProduct.category !== safeProduct.maincategory && (
-              <>
-                <span className="text-gray-400">/</span>
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+            {/* Trust Badges */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                <Shield className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+                <div className="text-xs font-semibold text-gray-900">EU-GMP</div>
+                <div className="text-xs text-gray-500">Certified</div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                <Award className="h-6 w-6 text-emerald-600 mx-auto mb-2" />
+                <div className="text-xs font-semibold text-gray-900">{safeProduct.purity}</div>
+                <div className="text-xs text-gray-500">HPLC Tested</div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                <FileText className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+                <div className="text-xs font-semibold text-gray-900">COA</div>
+                <div className="text-xs text-gray-500">Included</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Details */}
+          <div>
+            {/* Categories & Discount Badge */}
+            <div className="flex items-center gap-2 mb-4">
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg border border-blue-200">
+                {safeProduct.maincategory}
+              </span>
+              {safeProduct.category && safeProduct.category !== safeProduct.maincategory && (
+                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg border border-gray-200">
                   {safeProduct.category}
                 </span>
-              </>
-            )}
-          </div>
-
-          <h1 className="text-4xl font-bold mb-4">{safeProduct.name}</h1>
-          
-          <div className="flex items-center gap-2 mb-6">
-            <div className={`w-3 h-3 rounded-full ${safeProduct.inStock ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-            <span className="text-gray-700 font-medium">
-              {safeProduct.inStock ? 'In Stock' : 'Pre-order'}
-            </span>
-          </div>
-          
-          <p className="text-gray-700 text-lg mb-6">{safeProduct.description}</p>
-
-          {/* Price Section */}
-          <div className="mb-8">
-            <div className="flex items-baseline gap-4 mb-2">
-              <span className="text-5xl font-bold">${(safeProduct.price).toFixed(2)}</span>
+              )}
               {hasDiscount && (
-                <>
-                  <span className="text-2xl text-gray-400 line-through">
-                    ${(safeProduct.originalPrice).toFixed(2)}
-                  </span>
-                  <span className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-bold">
-                    Save ${(safeProduct.originalPrice - safeProduct.price).toFixed(0)}
-                  </span>
-                </>
+                <span className="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded-lg shadow-md">
+                  -{discountPercent}% OFF
+                </span>
               )}
             </div>
-            <div className="text-gray-600">
-              {safeProduct.dosage} • {safeProduct.quantity}
-            </div>
-          </div>
 
-          {/* Quantity and Add to Cart */}
-          <div className="mb-12">
-            <div className="flex items-center gap-4 mb-4">
-              <span className="font-medium">Quantity:</span>
-              <div className="flex items-center border rounded-lg">
-                <button 
-                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-50"
-                >
-                  −
-                </button>
-                <span className="px-4 py-2 font-bold w-12 text-center">{quantity}</span>
-                <button 
-                  onClick={() => setQuantity(q => q + 1)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-50"
-                >
-                  +
-                </button>
-              </div>
-              <span className="text-gray-600">
-                Total: <span className="font-bold">${(safeProduct.price * quantity).toFixed(2)}</span>
+            {/* Product Name */}
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">{safeProduct.name}</h1>
+            
+            {/* Stock Status */}
+            <div className="flex items-center gap-2 mb-8">
+              <div className={`w-2 h-2 rounded-full ${safeProduct.inStock ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+              <span className="text-sm font-medium text-gray-700">
+                {safeProduct.inStock ? 'In Stock - Ships within 24 hours' : 'Pre-order - Ships in 3-5 days'}
               </span>
             </div>
 
+            {/* Dosage and Quantity Box */}
+            <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 mb-8">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">Dosage</div>
+                  <div className="text-sm font-semibold text-gray-900">{safeProduct.dosage}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">Quantity</div>
+                  <div className="text-sm font-semibold text-gray-900">{safeProduct.quantity}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Price - Outside box, more prominent */}
+            <div className="mb-8">
+              <div className="flex items-baseline gap-3 mb-2">
+                <span className="text-5xl font-bold text-gray-900">
+                  ${(safeProduct.price).toFixed(2)}
+                </span>
+                {hasDiscount && (
+                  <span className="text-2xl text-gray-500 line-through">
+                    ${(safeProduct.original_price).toFixed(2)}
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-gray-600">
+                Price per unit • Tax and shipping calculated at checkout
+              </div>
+            </div>
+
+            {/* Quantity Selector */}
+            <div className="mb-6">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium text-gray-700">Quantity:</span>
+                <div className="flex items-center border-2 border-gray-200 rounded-lg">
+                  <button 
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    className="px-4 py-2.5 text-gray-600 hover:bg-gray-50 font-bold transition-colors"
+                  >
+                    −
+                  </button>
+                  <span className="px-6 py-2.5 font-bold text-gray-900 border-x-2 border-gray-200">
+                    {quantity}
+                  </span>
+                  <button 
+                    onClick={() => setQuantity(q => q + 1)}
+                    className="px-4 py-2.5 text-gray-600 hover:bg-gray-50 font-bold transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
+                <span className="text-sm text-gray-600">
+                  Total: <span className="font-bold text-gray-900">${(safeProduct.price * quantity).toFixed(2)}</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Add to Cart Button */}
             <button 
               onClick={handleAddToCart}
               disabled={!safeProduct.inStock}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 mb-4"
             >
-              <ShoppingCart className="h-6 w-6" />
+              <ShoppingCart className="h-5 w-5" />
               {safeProduct.inStock ? `Add ${quantity} to Cart` : 'Notify When Available'}
             </button>
-          </div>
 
-          <div className="text-center text-sm text-gray-600 mb-8">
-            🔒 Secure checkout • Discreet billing
+            {/* Security & Shipping Info */}
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="flex items-center gap-2 text-gray-600">
+                <Lock className="h-4 w-4 text-green-600" />
+                <span>Secure Checkout</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600">
+                <Truck className="h-4 w-4 text-blue-600" />
+                <span>Fast Shipping</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600">
+                <Shield className="h-4 w-4 text-purple-600" />
+                <span>Discreet Packaging</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                <span>Quality Guaranteed</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Specifications & COA Tabs */}
-      <div className="mt-16">
-        <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-lg">
-          {/* Tab Headers */}
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setSelectedTab('specifications')}
-              className={`flex-1 py-5 px-6 text-lg font-semibold transition-colors ${
-                selectedTab === 'specifications'
-                  ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-3">
-                <Beaker className="h-5 w-5" />
-                Specifications
-              </div>
-            </button>
-            
-            <button
-              onClick={() => setSelectedTab('coa')}
-              className={`flex-1 py-5 px-6 text-lg font-semibold transition-colors ${
-                selectedTab === 'coa'
-                  ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-3">
-                <FileText className="h-5 w-5" />
+        {/* Tabs Section */}
+        <div className="mt-16">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+            {/* Tab Headers */}
+            <div className="flex border-b border-gray-200">
+              <button
+                onClick={() => setSelectedTab('specifications')}
+                className={`flex-1 py-4 px-6 font-semibold transition-all ${
+                  selectedTab === 'specifications'
+                    ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                Technical Specifications
+              </button>
+              
+              <button
+                onClick={() => setSelectedTab('coa')}
+                className={`flex-1 py-4 px-6 font-semibold transition-all ${
+                  selectedTab === 'coa'
+                    ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
                 Certificate of Analysis
-              </div>
-            </button>
-          </div>
-          
-          {/* Tab Content */}
-          <div className="p-8">
-            {selectedTab === 'specifications' && (
-              <div className="space-y-8">
-                <h3 className="text-2xl font-bold text-gray-900">Technical Specifications</h3>
-                
+              </button>
+
+              <button
+                onClick={() => setSelectedTab('usage')}
+                className={`flex-1 py-4 px-6 font-semibold transition-all ${
+                  selectedTab === 'usage'
+                    ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                Storage & Handling
+              </button>
+            </div>
+            
+            {/* Tab Content */}
+            <div className="p-8">
+              {selectedTab === 'specifications' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Purity Card */}
-                  <div className="bg-gradient-to-br from-white to-blue-50 border border-blue-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Shield className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <span className="font-semibold text-gray-700">Purity</span>
-                    </div>
-                    <div className="text-3xl font-bold text-blue-700">{safeProduct.purity}</div>
-                    <div className="text-sm text-gray-500 mt-2">HPLC-MS verified</div>
+                  {/* Purity */}
+                  <div className="border border-gray-200 rounded-xl p-5 bg-gradient-to-br from-white to-emerald-50">
+                    <div className="text-sm text-gray-500 mb-2">Purity (HPLC)</div>
+                    <div className="text-2xl font-bold text-emerald-600">{safeProduct.purity}</div>
+                    <div className="text-xs text-gray-500 mt-1">Verified by HPLC-MS</div>
                   </div>
 
-                  {/* Storage Card */}
-                  <div className="bg-gradient-to-br from-white to-purple-50 border border-purple-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-purple-100 rounded-lg">
-                        <Thermometer className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <span className="font-semibold text-gray-700">Storage</span>
-                    </div>
-                    <div className="text-3xl font-bold text-purple-700">{safeProduct.storage}</div>
-                    <div className="text-sm text-gray-500 mt-2">Recommended temperature</div>
-                  </div>
-
-                  {/* Other specifications */}
-                  {safeProduct.chemical_formula && (
-                    <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="text-sm text-gray-500 mb-2">Chemical Formula</div>
-                      <div className="text-xl font-bold text-gray-900 font-mono">{safeProduct.chemical_formula}</div>
-                    </div>
-                  )}
-
-                  {safeProduct.molecular_weight && (
-                    <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                  {/* Molecular Weight */}
+                  {safeProduct.molecularWeight && (
+                    <div className="border border-gray-200 rounded-xl p-5 bg-gradient-to-br from-white to-blue-50">
                       <div className="text-sm text-gray-500 mb-2">Molecular Weight</div>
-                      <div className="text-xl font-bold text-gray-900">{safeProduct.molecular_weight} g/mol</div>
+                      <div className="text-2xl font-bold text-blue-600">{safeProduct.molecularWeight}</div>
+                      <div className="text-xs text-gray-500 mt-1">g/mol</div>
                     </div>
                   )}
 
-    
-                  {/* Half-Life Card */}
+                  {/* Half-Life */}
                   {safeProduct.halflife && (
-                    <div className="bg-gradient-to-br from-white to-orange-50 border border-orange-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="border border-gray-200 rounded-xl p-5 bg-gradient-to-br from-white to-orange-50">
                       <div className="text-sm text-gray-500 mb-2">Half-Life</div>
-                      <div className="text-2xl font-bold text-orange-700">{safeProduct.halflife}</div>
+                      <div className="text-2xl font-bold text-orange-600">{safeProduct.halflife}</div>
+                      <div className="text-xs text-gray-500 mt-1">Biological half-life</div>
                     </div>
                   )}
 
+                  {/* CAS Number */}
                   {safeProduct.cas && (
-                    <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="border border-gray-200 rounded-xl p-5 bg-gradient-to-br from-white to-purple-50">
                       <div className="text-sm text-gray-500 mb-2">CAS Number</div>
-                      <div className="text-xl font-bold text-gray-900 font-mono">{safeProduct.cas}</div>
+                      <div className="text-lg font-mono font-bold text-purple-600">{safeProduct.cas}</div>
+                      <div className="text-xs text-gray-500 mt-1">Chemical registry</div>
                     </div>
                   )}
 
+                  {/* Chemical Formula */}
+                  {safeProduct.chemical_formula && (
+                    <div className="border border-gray-200 rounded-xl p-5 bg-gradient-to-br from-white to-indigo-50">
+                      <div className="text-sm text-gray-500 mb-2">Chemical Formula</div>
+                      <div className="text-lg font-mono font-bold text-indigo-600">{safeProduct.chemical_formula}</div>
+                      <div className="text-xs text-gray-500 mt-1">Molecular structure</div>
+                    </div>
+                  )}
+
+                  {/* Synonyms */}
                   {safeProduct.synonym && (
-                    <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow md:col-span-2 lg:col-span-3">
+                    <div className="border border-gray-200 rounded-xl p-5 bg-gradient-to-br from-white to-gray-50 md:col-span-2 lg:col-span-3">
                       <div className="text-sm text-gray-500 mb-2">Also Known As</div>
-                      <div className="text-xl font-bold text-gray-900">{safeProduct.synonym}</div>
+                      <div className="text-lg font-semibold text-gray-900">{safeProduct.synonym}</div>
+                      <div className="text-xs text-gray-500 mt-1">Common names and abbreviations</div>
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {selectedTab === 'coa' && (
-              <div className="space-y-8">
-                <h3 className="text-2xl font-bold text-gray-900">Certificate of Analysis</h3>
-                <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-8 text-center">
-                  <FileText className="h-20 w-20 text-gray-400 mx-auto mb-6" />
-                  <h4 className="text-2xl font-bold text-gray-900 mb-4">Batch-Specific COA Available</h4>
-                  <p className="text-gray-600 text-lg mb-8 max-w-2xl mx-auto">
-                    Each batch includes a Certificate of Analysis with full HPLC-MS chromatogram, 
-                    purity verification, and quality control documentation.
+              {selectedTab === 'coa' && (
+                <div className="text-center py-12">
+                  <FileText className="h-20 w-20 text-gray-300 mx-auto mb-6" />
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Certificate of Analysis Available</h3>
+                  <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+                    Each batch includes a complete Certificate of Analysis with HPLC chromatogram, 
+                    purity verification, and full quality control documentation.
                   </p>
-                  <button className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl">
-                    Request COA for Batch {safeProduct.id.toUpperCase()}
+                  <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all shadow-md hover:shadow-lg">
+                    Request COA for This Batch
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+
+              {selectedTab === 'usage' && (
+                <div className="space-y-6">
+                  <div className="border border-gray-200 rounded-xl p-6">
+                    <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                      <Info className="h-5 w-5 text-blue-600" />
+                      Storage Conditions
+                    </h4>
+                    <p className="text-gray-700">{safeProduct.storage}</p>
+                  </div>
+
+                  <div className="border border-gray-200 rounded-xl p-6">
+                    <h4 className="font-bold text-gray-900 mb-3">Handling Guidelines</h4>
+                    <ul className="space-y-2 text-gray-700">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span>For research purposes only</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span>Handle in controlled laboratory environment</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span>Follow institutional biosafety protocols</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
