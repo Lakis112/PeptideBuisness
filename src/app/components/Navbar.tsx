@@ -180,40 +180,40 @@ export default function Navbar() {
                           </Link>
                         </div>
                         
-                        <div className="space-y-2">
-                          {category.subcategories.length > 0 ? (
-                            <>
-                              {category.subcategories.map((sub) => (
-                                <Link 
-                                  key={sub.id}
-                                  href={`/products?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(sub.name)}`}
-                                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-white rounded-lg px-3 py-2.5 transition-all group/sub"
-                                  onClick={() => setIsProductsOpen(false)}
-                                >
-                                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full group-hover/sub:bg-blue-500 group-hover/sub:scale-125 transition-all"></div>
-                                  <span className="flex-1">{sub.name}</span>
-                                  <ChevronRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover/sub:opacity-100 group-hover/sub:translate-x-0 transition-all" />
-                                </Link>
-                              ))}
-                              <Link 
-                                href={`/products?category=${encodeURIComponent(category.name)}`}
-                                className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 mt-4 pt-3 border-t border-gray-100"
-                                onClick={() => setIsProductsOpen(false)}
-                              >
-                                <span>View all {category.name}</span>
-                                <ChevronRight className="w-4 h-4" />
-                              </Link>
-                            </>
-                          ) : (
-                            <Link 
-                              href={`/products?category=${encodeURIComponent(category.name)}`}
-                              className="block text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2.5 transition-colors italic"
-                              onClick={() => setIsProductsOpen(false)}
-                            >
-                              Explore {category.name}
-                            </Link>
-                          )}
-                        </div>
+                        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+  {category.subcategories.length > 0 ? (
+    <>
+      {category.subcategories.map((sub) => (
+        <Link 
+          key={sub.id}
+          href={`/products?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(sub.name)}`}
+          className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-white rounded-lg px-3 py-2.5 transition-all group/sub"
+          onClick={() => setIsProductsOpen(false)}
+        >
+          <div className="w-1.5 h-1.5 bg-gray-300 rounded-full group-hover/sub:bg-blue-500 group-hover/sub:scale-125 transition-all"></div>
+          <span className="flex-1 text-left">{sub.name}</span>
+          <ChevronRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover/sub:opacity-100 group-hover/sub:translate-x-0 transition-all" />
+        </Link>
+      ))}
+      <Link 
+        href={`/products?category=${encodeURIComponent(category.name)}`}
+        className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 mt-4 pt-3 border-t border-gray-100 sticky bottom-0 bg-white"
+        onClick={() => setIsProductsOpen(false)}
+      >
+        <span>View all {category.name}</span>
+        <ChevronRight className="w-4 h-4" />
+      </Link>
+    </>
+  ) : (
+    <Link 
+      href={`/products?category=${encodeURIComponent(category.name)}`}
+      className="block text-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2.5 transition-colors italic"
+      onClick={() => setIsProductsOpen(false)}
+    >
+      Explore {category.name}
+    </Link>
+  )}
+</div>
                       </div>
                     ))}
                   </div>

@@ -146,74 +146,100 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               products={products}
             />
             
-            {/* Featured Products */}
-            {featuredProducts.length > 0 && (
-              <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
-                      <Star className="h-4 w-4 text-white fill-white" />
-                    </div>
-                    <span>Featured Products</span>
-                  </h3>
-                  <span className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-                    Editor's Pick
+          {/* Professional Featured Products - FIXED VERSION */}
+{featuredProducts.length > 0 && (
+  <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+    {/* Header */}
+    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+      <div className="p-2 bg-blue-50 rounded-lg">
+        <Star className="h-5 w-5 text-blue-600 fill-blue-600" />
+      </div>
+      <div className="flex-1">
+        <h3 className="text-lg font-bold text-gray-900">Featured Products</h3>
+        <p className="text-xs text-gray-500">Editor's picks</p>
+      </div>
+    </div>
+    
+    {/* Product List */}
+    <div className="space-y-4">
+      {featuredProducts.slice(0, 3).map((product: any) => (
+        <a 
+          key={product.id}
+          href={`/products/${product.slug}`}
+          className="group block rounded-xl border border-gray-200 hover:border-blue-300 bg-white hover:shadow-md transition-all duration-200 p-4"
+        >
+          <div className="flex gap-4">
+            {/* Product Image - FIXED */}
+            <div className="relative w-24 h-24 flex-shrink-0 rounded-lg border border-gray-100 bg-gray-50 p-2">
+              {product.imageUrl ? (
+                <img 
+                  src={product.imageUrl} 
+                  alt={product.name}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <FlaskConical className="h-10 w-10 text-gray-400" />
+                </div>
+              )}
+            </div>
+            
+            {/* Product Info */}
+            <div className="flex-1 min-w-0">
+              {/* Name */}
+              <h4 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-sm mb-1 line-clamp-2">
+                {product.name}
+              </h4>
+              
+              {/* Purity Badge */}
+              {product.purity && (
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded text-xs font-medium text-emerald-700 mb-2">
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                  {typeof product.purity === 'string' ? product.purity : `${product.purity}%`}
+                </div>
+              )}
+              
+              {/* Price */}
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl font-bold text-gray-900">
+                  ${product.price?.toFixed(2)}
+                </span>
+                {product.original_price && product.original_price > product.price && (
+                  <span className="text-xs text-gray-500 line-through">
+                    ${product.original_price?.toFixed(2)}
                   </span>
-                </div>
-                
-                <div className="space-y-4">
-                  {featuredProducts.map((product: any) => (
-                    <Link 
-                      key={product.id}
-                      href={`/products/${product.slug}`}
-                      className="group block overflow-hidden rounded-xl border border-gray-200 bg-white hover:border-blue-300 hover:shadow-lg transition-all duration-300"
-                    >
-                      <div className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100 bg-gradient-to-br from-gray-50 to-white">
-                            {product.imageUrl ? (
-                              <img 
-                                src={product.imageUrl} 
-                                alt={product.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                                <FlaskConical className="h-8 w-8 text-blue-600" />
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1 text-sm mb-1">
-                              {product.name}
-                            </h4>
-                            
-                            <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-                              {product.description?.substring(0, 60)}...
-                            </p>
-                            
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="flex items-baseline gap-2">
-                                  <span className="text-lg font-bold text-gray-900">
-                                    ${product.price?.toFixed(2)}
-                                  </span>
-                                </div>
-                              </div>
-                              
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <ChevronRight className="h-4 w-4 text-blue-500" />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                )}
               </div>
-            )}
+              
+              {/* Stock Status */}
+              <div className="flex items-center gap-1 text-xs text-emerald-600 mt-1">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                <span>In Stock</span>
+              </div>
+            </div>
+            
+            {/* Arrow */}
+            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <ChevronRight className="h-5 w-5 text-blue-600" />
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+    
+    {/* View All Button */}
+    <div className="mt-6 pt-4 border-t border-gray-100">
+      <a 
+        href="/products?sort=featured"
+        className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-lg font-medium transition-all text-sm group"
+      >
+        <span>View All Featured</span>
+        <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+      </a>
+    </div>
+  </div>
+)}
+
             
             {/* Quality Assurance */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6">

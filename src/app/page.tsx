@@ -9,15 +9,19 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  original_price?: number;
   category: string;
   sku: string;
   slug: string;
   dosage?: string;
+  quantity?: string;
   purity?: string;
   stock?: number;
   inStock?: boolean;
+  featured?: boolean;
   imageUrl?: string;
-  molecularWeight?: string; // Add this
+  molecularWeight?: string;
+  casNumber?: string;
 }
 
 function HomeContent() {
@@ -299,7 +303,7 @@ function HomeContent() {
             </div>
           ) : filteredProducts.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
   {filteredProducts.slice(0, 8).map((product) => (
     <ProductCard 
       key={product.id}
@@ -308,13 +312,16 @@ function HomeContent() {
       name={product.name}
       description={product.description}
       price={product.price}
+      original_price={product.original_price}
       category={product.category}
       dosage={product.dosage || 'Research'}
-      quantity="1 vial"
+      quantity={product.quantity || '1 vial'}
       purity={product.purity || '99%'}
       molecularWeight={product.molecularWeight || ''}
+      casNumber={product.casNumber || ''}
+      sequence=""
       inStock={product.inStock !== undefined ? product.inStock : (product.stock > 0)}
-      isFeatured={false}
+      isFeatured={product.featured || false}
       imageUrl={product.imageUrl}
     />
   ))}
