@@ -17,6 +17,7 @@ interface Product {
   quantity?: string;
   purity?: string;
   stock?: number;
+  productStatus?: 'in_stock' | 'out_of_stock' | 'coming_soon';  // ← ADD THIS LINE
   inStock?: boolean;
   featured?: boolean;
   imageUrl?: string;
@@ -306,24 +307,26 @@ function HomeContent() {
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
   {filteredProducts.slice(0, 8).map((product) => (
     <ProductCard 
-      key={product.id}
-      id={product.id}
-      sku={product.slug || product.sku}
-      name={product.name}
-      description={product.description}
-      price={product.price}
-      original_price={product.original_price}
-      category={product.category}
-      dosage={product.dosage || 'Research'}
-      quantity={product.quantity || '1 vial'}
-      purity={product.purity || '99%'}
-      molecularWeight={product.molecularWeight || ''}
-      casNumber={product.casNumber || ''}
-      sequence=""
-      inStock={product.inStock !== undefined ? product.inStock : (product.stock > 0)}
-      isFeatured={product.featured || false}
-      imageUrl={product.imageUrl}
-    />
+  key={product.id}
+  id={product.id}
+  sku={product.slug || product.sku}
+  name={product.name}
+  description={product.description}
+  price={product.price}
+  original_price={product.original_price}
+  category={product.category}
+  dosage={product.dosage || 'Research'}
+  quantity={product.quantity || '1 vial'}
+  purity={product.purity || '99%'}
+  molecularWeight={product.molecularWeight || ''}
+  casNumber={product.casNumber || ''}
+  sequence=""
+  stock={product.stock}  // ← ADD THIS LINE
+  productStatus={product.productStatus}  // ← ADD THIS LINE
+  inStock={product.inStock !== undefined ? product.inStock : (product.stock > 0)}
+  isFeatured={product.featured || false}
+  imageUrl={product.imageUrl}
+/>
   ))}
 </div>
 

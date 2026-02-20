@@ -21,6 +21,7 @@ export async function GET(
         c.name as subcategory,
         parent.name as maincategory,
         p.stock,
+        p.product_status as "productStatus",
         p.status,
         p.created_at,
         p.updated_at,

@@ -21,6 +21,8 @@ interface ProductCardProps {
   casNumber?: string;
   sequence?: string;
   inStock?: boolean;
+  stock?: number;
+  productStatus?: 'in_stock' | 'out_of_stock' | 'coming_soon';
   isFeatured?: boolean;
   imageUrl?: string;
 }
@@ -38,7 +40,9 @@ export default function ProductCard({
   molecularWeight,
   casNumber,
   sequence,
-  inStock = true,
+  inStock,
+  stock,
+  productStatus,
   isFeatured = false,
   imageUrl
 }: ProductCardProps) {
@@ -51,6 +55,21 @@ export default function ProductCard({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (productStatus === 'out_of_stock') {
+      toast.error('Out of stock', {
+        description: 'This product is currently unavailable.',
+      });
+      return;
+    }
+    
+    if (productStatus === 'coming_soon') {
+      toast.info('Coming soon', {
+        description: 'This product will be available soon. Check back later!',
+      });
+      return;
+    }
+    
     addItem({ id, name, price, quantity: 1, imageUrl: imageUrl });
     toast.success('Added to cart', {
       description: `${name} has been added to your cart.`,
@@ -58,23 +77,46 @@ export default function ProductCard({
     });
   };
 
-  // Get purity text color - green if 99%+
-  const getPurityTextColor = (purity: string) => {
-    if (!purity) return 'text-gray-900';
-    const percent = parseFloat(purity.replace('%', '').replace(/[^0-9.]/g, ''));
-    if (isNaN(percent)) return 'text-gray-900';
-    if (percent >= 99) return 'text-emerald-600 font-semibold';
-    return 'text-gray-900';
+  // Determine stock status based on productStatus field only
+  const getStockStatus = () => {
+    // Check productStatus - this is the source of truth
+    if (productStatus === 'coming_soon') {
+      return {
+        label: 'Coming Soon',
+        bgColor: 'bg-amber-50',
+        textColor: 'text-amber-700',
+        borderColor: 'border-amber-200',
+        dotColor: 'bg-amber-500',
+        buttonDisabled: true,
+        buttonText: 'Notify Me'
+      };
+    }
+    
+    if (productStatus === 'out_of_stock') {
+      return {
+        label: 'Out of Stock',
+        bgColor: 'bg-red-50',
+        textColor: 'text-red-700',
+        borderColor: 'border-red-200',
+        dotColor: 'bg-red-500',
+        buttonDisabled: true,
+        buttonText: 'Out of Stock'
+      };
+    }
+    
+    // Default to in stock
+    return {
+      label: 'In Stock',
+      bgColor: 'bg-emerald-50',
+      textColor: 'text-emerald-700',
+      borderColor: 'border-emerald-200',
+      dotColor: 'bg-emerald-500',
+      buttonDisabled: false,
+      buttonText: 'Add'
+    };
   };
 
-  // Ensure purity has % sign
-  const formatPurity = (purity: string) => {
-    if (!purity) return 'N/A';
-    // If it already has %, return as is
-    if (purity.includes('%')) return purity;
-    // Otherwise add %
-    return `${purity}%`;
-  };
+  const stockStatus = getStockStatus();
 
   return (
     <Link href={`/products/${sku}`} className="block">
@@ -134,17 +176,11 @@ export default function ProductCard({
             )}
           </div>
 
-          {/* Stock Badge */}
+          {/* Stock Badge with Color Coding */}
           <div className="absolute bottom-3 left-3">
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${
-              inStock 
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                : 'bg-amber-50 text-amber-700 border border-amber-200'
-            }`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${
-                inStock ? 'bg-emerald-500' : 'bg-amber-500'
-              }`}></div>
-              {inStock ? 'In Stock' : 'Pre-order'}
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${stockStatus.bgColor} ${stockStatus.textColor} ${stockStatus.borderColor} border`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${stockStatus.dotColor} ${productStatus === 'in_stock' && stock && stock > 0 ? 'animate-pulse' : ''}`}></div>
+              {stockStatus.label}
             </div>
           </div>
         </div>
@@ -156,13 +192,15 @@ export default function ProductCard({
             {name}
           </h3>
 
-          {/* Technical Specs Grid - Both styled the same way */}
+          {/* Technical Specs Grid - Purity and CAS Number */}
           <div className="grid grid-cols-2 gap-2 mb-4 pb-4 border-b border-gray-100">
-            {/* Purity - styled like CAS, green if 99%+ */}
+            {/* Purity */}
             <div>
               <div className="text-xs text-gray-500 mb-1">Purity</div>
-              <div className={`text-sm ${getPurityTextColor(purity)}`}>
-                {formatPurity(purity)}
+              <div className={`text-sm font-semibold ${
+                parseFloat(purity.replace('%', '')) >= 99 ? 'text-emerald-600' : 'text-gray-900'
+              }`}>
+                {purity}
               </div>
             </div>
             
@@ -196,15 +234,15 @@ export default function ProductCard({
 
             <button 
               onClick={handleAddToCart}
-              disabled={!inStock}
+              disabled={stockStatus.buttonDisabled}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                inStock 
+                !stockStatus.buttonDisabled
                   ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md' 
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed'
               }`}
             >
               <ShoppingCart className="h-4 w-4" />
-              <span className="hidden sm:inline">Add</span>
+              <span className="hidden sm:inline">{stockStatus.buttonText}</span>
             </button>
           </div>
         </div>

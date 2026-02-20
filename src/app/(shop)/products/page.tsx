@@ -311,6 +311,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                     original_price={product.original_price}
                     casNumber={product.casNumber || ''}
                     imageUrl={product.imageUrl} 
+		    stock={product.stock}
+		    productStatus={product.productStatus}
                   />
                 ))}
               </div>

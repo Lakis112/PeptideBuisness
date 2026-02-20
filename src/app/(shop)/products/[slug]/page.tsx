@@ -10,7 +10,6 @@ interface ProductPageProps {
 
 async function getProduct(slug: string) {
   try {
-    // Use absolute URL
     const baseUrl = process.env.NODE_ENV === 'production' 
       ? 'https://peptide-buisness.vercel.app' 
       : 'http://localhost:3000';
@@ -22,24 +21,24 @@ async function getProduct(slug: string) {
     if (!response.ok) return null;
     const data = await response.json();
     
-    // Ensure price is a NUMBER
+    // Ensure price is a NUMBER and use correct field names
     return {
       ...data,
       price: typeof data.price === 'string' ? parseFloat(data.price) : (data.price || 0),
-      originalPrice: data.originalPrice 
-        ? (typeof data.originalPrice === 'string' 
-          ? parseFloat(data.originalPrice) 
-          : data.originalPrice)
+      original_price: data.original_price 
+        ? (typeof data.original_price === 'string' 
+          ? parseFloat(data.original_price) 
+          : data.original_price)
         : undefined
     };
-  } catch {
+  } catch (error) {
+    console.error('Error fetching product:', error);
     return null;
   }
 }
 
 async function getProducts() {
   try {
-    // Use absolute URL
     const baseUrl = process.env.NODE_ENV === 'production' 
       ? 'https://peptide-buisness.vercel.app' 
       : 'http://localhost:3000';
@@ -55,10 +54,10 @@ async function getProducts() {
     return data.map((product: any) => ({
       ...product,
       price: typeof product.price === 'string' ? parseFloat(product.price) : (product.price || 0),
-      originalPrice: product.originalPrice 
-        ? (typeof product.originalPrice === 'string' 
-          ? parseFloat(product.originalPrice) 
-          : product.originalPrice)
+      original_price: product.original_price 
+        ? (typeof product.original_price === 'string' 
+          ? parseFloat(product.original_price) 
+          : product.original_price)
         : undefined
     }));
   } catch {
@@ -77,36 +76,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) {
     notFound();
   }
-  
-  // DEBUG - Add these 4 lines
-  console.log('Current product category:', product.category);
-  console.log('All products count:', products.length);
-  console.log('Sample products:', products.slice(0, 3).map(p => ({ id: p.id, category: p.category, name: p.name })));
 
   const relatedProducts = products
-    .filter((p: any) => {
-      const isMatch = p.category === product.category && p.id !== product.id;
-      console.log(`Product ${p.id} (${p.category}) matches? ${isMatch}`);
-      return isMatch;
-    })
+    .filter((p: any) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
-
-console.log('Related products found:', relatedProducts.length); // Add this line
       
   return (
-  <div className="min-h-screen bg-gray-50">
-    <ProductDetail 
-      product={product} 
-      sku={product.slug || product.sku}  // ← Add sku prop
-      imageUrl={product.imageUrl}
-    />
-    <RelatedProducts 
-      products={relatedProducts} 
-      category={product.category}
-      sku={product.slug || product.sku}  // ← Add sku prop
-    />
-  </div>
-);
+    <div className="min-h-screen bg-gray-50">
+      <ProductDetail 
+        product={product} 
+        sku={product.slug || product.sku}
+        imageUrl={product.imageUrl}
+      />
+      <RelatedProducts 
+        products={relatedProducts} 
+        category={product.category}
+        sku={product.slug || product.sku}
+      />
+    </div>
+  );
 }
 
 export const dynamic = 'force-dynamic';
