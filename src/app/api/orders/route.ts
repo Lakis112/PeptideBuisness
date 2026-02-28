@@ -1,3 +1,5 @@
+// Updated orders API for consolidated items structure
+
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
@@ -6,30 +8,33 @@ import { isAdmin } from '@/middleware/admin';
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Authenticate user from cookie
+    // 1. Authenticate user from cookie (OPTIONAL - allow guest checkout)
     const cookieStore = await cookies();
     const token = cookieStore.get('auth_token')?.value;
     
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
+    let userId = null;
+    let userEmail = '';
 
-    // Verify token
-    let decoded: { id: number; email: string };
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: number; email: string };
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Invalid or expired token' },
-        { status: 401 }
-      );
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: number; email: string };
+        userId = decoded.id;
+        userEmail = decoded.email;
+      } catch (error) {
+        console.log('Invalid token, proceeding as guest');
+      }
     }
 
     // 2. Parse request data
-    const { cartItems, shippingAddress, shippingMethod, notes } = await request.json();
+    const { 
+      cartItems, 
+      shippingAddress, 
+      shippingMethod, 
+      notes,
+      paymentMethod,
+      cryptocurrency,
+      transactionId
+    } = await request.json();
     
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       return NextResponse.json(
@@ -45,80 +50,86 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate crypto payment fields
+    if (paymentMethod === 'crypto') {
+      if (!cryptocurrency || !transactionId) {
+        return NextResponse.json(
+          { error: 'Cryptocurrency and transaction ID are required for crypto payments' },
+          { status: 400 }
+        );
+      }
+    }
+
     // 3. Calculate totals
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shipping = shippingMethod === 'express' ? 15.00 : 5.00; // Example shipping logic
-    const tax = subtotal * 0.08; // Example 8% tax
+    const shipping = 50.00;
+    const tax = 0;
     const total = subtotal + shipping + tax;
 
     // 4. Generate order number
     const orderNumber = 'ORD-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 
-    // 5. Start database transaction
-    const client = await pool.connect();
-    
-    try {
-      await client.query('BEGIN');
+    // 5. Format items for JSON storage
+    const itemsJson = cartItems.map(item => ({
+      id: String(item.id),
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      total: item.price * item.quantity
+    }));
 
-      // Insert order
-      const orderResult = await client.query(
-        `INSERT INTO orders (
-          user_id, order_number, status, subtotal, shipping, tax, total,
-          shipping_method, notes, shipping_address
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, order_number`,
-        [
-          decoded.id,
-          orderNumber,
-          'pending',
-          subtotal,
-          shipping,
-          tax,
-          total,
-          shippingMethod || 'standard',
-          notes || '',
-          JSON.stringify(shippingAddress)
-        ]
-      );
+    // 6. Create order (single INSERT - no transaction needed!)
+    const orderResult = await pool.query(
+      `INSERT INTO orders (
+        user_id, 
+        order_number, 
+        status, 
+        items,
+        subtotal, 
+        shipping, 
+        tax, 
+        total,
+        shipping_method, 
+        notes, 
+        shipping_address,
+        payment_method,
+        cryptocurrency,
+        transaction_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING id, order_number`,
+      [
+        userId,
+        orderNumber,
+        'pending',
+        JSON.stringify(itemsJson),  // Store items as JSON!
+        subtotal,
+        shipping,
+        tax,
+        total,
+        shippingMethod || 'standard',
+        notes || '',
+        JSON.stringify(shippingAddress),
+        paymentMethod || 'crypto',
+        cryptocurrency || null,
+        transactionId || null
+      ]
+    );
 
-      const orderId = orderResult.rows[0].id;
+    const orderId = orderResult.rows[0].id;
 
-      // Insert order items
-      for (const item of cartItems) {
-        await client.query(
-          `INSERT INTO order_items (
-            order_id, product_id, product_name, quantity, unit_price, total_price
-          ) VALUES ($1, $2, $3, $4, $5, $6)`,
-          [
-            orderId,
-            String(item.id),  // Convert to string
-            item.name,
-            item.quantity,
-            item.price,
-            item.price * item.quantity
-          ]
-        );
+    // 7. Return success response
+    return NextResponse.json({
+      success: true,
+      order: {
+        id: orderId,
+        orderNumber: orderResult.rows[0].order_number,
+        total: total,
+        paymentMethod: paymentMethod,
+        cryptocurrency: cryptocurrency,
+        transactionId: transactionId,
+        estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
       }
-
-      await client.query('COMMIT');
-
-      // 6. Return success response
-      return NextResponse.json({
-        success: true,
-        order: {
-          id: orderId,
-          orderNumber: orderResult.rows[0].order_number,
-          total: total,
-          estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
-        }
-      });
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
 
   } catch (error: any) {
     console.error('❌ Order creation error:', error);
@@ -129,7 +140,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET endpoint to fetch user's orders for dashboard
+// GET endpoint to fetch user's orders
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
@@ -144,9 +155,18 @@ export async function GET(request: NextRequest) {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: number };
     
-    // Fetch orders
+    // Fetch orders with items already included!
     const ordersResult = await pool.query(
-      `SELECT id, order_number, status, total, created_at 
+      `SELECT 
+        id, 
+        order_number, 
+        status, 
+        items,
+        total, 
+        payment_method,
+        cryptocurrency,
+        transaction_id,
+        created_at 
        FROM orders 
        WHERE user_id = $1 
        ORDER BY created_at DESC 
@@ -154,25 +174,15 @@ export async function GET(request: NextRequest) {
       [decoded.id]
     );
 
-    // Fetch items for each order
-    const ordersWithItems = await Promise.all(
-      ordersResult.rows.map(async (order) => {
-        const itemsResult = await pool.query(
-          `SELECT product_name as name, quantity, unit_price as price 
-           FROM order_items 
-           WHERE order_id = $1`,
-          [order.id]
-        );
-        return {
-          ...order,
-          items: itemsResult.rows || []
-        };
-      })
-    );
+    // Items are already in the JSON - no need for separate query!
+    const orders = ordersResult.rows.map(order => ({
+      ...order,
+      items: order.items || []  // Already parsed by PostgreSQL
+    }));
 
     return NextResponse.json({
       success: true,
-      orders: ordersWithItems
+      orders: orders
     });
 
   } catch (error: any) {
@@ -184,6 +194,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Admin endpoints (unchanged)
 export async function PUT(request: NextRequest) {
   try {
     const admin = await isAdmin(request);

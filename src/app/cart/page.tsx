@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Trash2, Plus, Minus, Shield, Truck, Lock, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, Shield, Truck, Lock, AlertCircle, Tag, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import Link from 'next/link';
 
@@ -9,10 +9,14 @@ export default function CartPage() {
   const { items, total, addItem, removeItem, updateQuantity, clearCart } = useCart();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [discountCode, setDiscountCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
   
-    // Add shipping fee
+  // Shipping fee
   const shippingFee = 50;
-  const cartTotal = total + shippingFee;
+  const subtotal = total;
+  const discount = appliedDiscount;
+  const cartTotal = subtotal - discount + shippingFee;
 
   useEffect(() => {
     checkAuth();
@@ -30,12 +34,21 @@ export default function CartPage() {
     }
   };
 
+  const applyDiscount = () => {
+    // Simple discount logic - you can replace with API call
+    if (discountCode.toUpperCase() === 'SAVE10') {
+      setAppliedDiscount(total * 0.1);
+    } else if (discountCode.toUpperCase() === 'SAVE20') {
+      setAppliedDiscount(total * 0.2);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <ShoppingCart className="h-12 w-12 text-blue-600 animate-pulse mx-auto mb-4" />
-          <p className="text-gray-600">Loading your research cart...</p>
+          <p className="text-gray-600">Loading your cart...</p>
         </div>
       </div>
     );
@@ -43,286 +56,271 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 bg-gradient-to-b from-gray-50 to-white">
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 bg-gray-50">
         <div className="relative mb-8">
           <ShoppingCart className="h-28 w-28 text-gray-300" />
-          <div className="absolute -inset-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full blur-xl opacity-50"></div>
+          <div className="absolute -inset-4 bg-blue-50 rounded-full blur-xl opacity-50"></div>
         </div>
-        <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+        <h2 className="text-3xl font-bold mb-4 text-gray-900">
           Your Cart is Empty
         </h2>
         <p className="text-gray-600 mb-8 text-lg max-w-md text-center">
-          Begin your scientific inquiry with our pharmaceutical-grade peptides
+          Begin your research with our pharmaceutical-grade products
         </p>
         <Link 
           href="/products"
-          className="group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-10 py-4 rounded-xl font-semibold text-lg hover:from-blue-800 hover:to-indigo-900 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5"
+          className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg"
         >
-          <span>Browse GMP Catalog</span>
-          <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-          </svg>
+          Browse Products
+          <ArrowLeft className="h-5 w-5 rotate-180" />
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <nav className="mb-8">
+          <ol className="flex items-center gap-2 text-sm">
+            <li><Link href="/" className="text-gray-500 hover:text-gray-700">Home</Link></li>
+            <li className="text-gray-400">/</li>
+            <li><Link href="/products" className="text-gray-500 hover:text-gray-700">Products</Link></li>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-900 font-medium">Shopping Cart</li>
+          </ol>
+        </nav>
+
         {/* Header */}
-        <div className="mb-10 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Pharmaceutical Cart
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Review your selected pharmaceutical-grade products
-          </p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Shopping Cart</h1>
+          <p className="text-gray-600">{items.length} {items.length === 1 ? 'item' : 'items'} in your cart</p>
         </div>
 
         {/* Guest Warning */}
         {!isAuthenticated && (
-          <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-2xl p-6 mb-8 max-w-4xl mx-auto">
-            <div className="flex items-start gap-4">
-              <AlertCircle className="h-6 w-6 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-yellow-800 text-lg mb-1">Guest Research Session</p>
-                <p className="text-yellow-700 mb-3">
-                  Your cart is saved locally to this device. 
-                  <Link href="/login" className="font-semibold ml-1 hover:underline text-yellow-900">
-                    Login or create a research account
-                  </Link> 
-                  {' '}to save your cart across devices and access order history.
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-amber-800">
+                  <Link href="/login" className="font-semibold hover:underline">Login</Link> or <Link href="/register" className="font-semibold hover:underline">create an account</Link> to save your cart and access order history.
                 </p>
-                <div className="flex gap-4 mt-4">
-                  <Link 
-                    href="/login"
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all"
-                  >
-                    Login to Account
-                  </Link>
-                  <Link 
-                    href="/register"
-                    className="bg-gradient-to-r from-gray-800 to-gray-900 text-white px-5 py-2.5 rounded-lg font-medium hover:from-gray-900 hover:to-black transition-all"
-                  >
-                    Create Account
-                  </Link>
-                </div>
               </div>
             </div>
           </div>
         )}
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Cart Items - Left Column */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Cart Items */}
+          <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
               <div 
                 key={item.id} 
-                className="group bg-white border border-gray-200 rounded-2xl p-6 flex items-center gap-6 shadow-sm hover:shadow-xl transition-all duration-300"
+                className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
               >
-                {/* Product Image Placeholder */}
-                {/* Product Image */}
-<div className="relative w-32 h-32 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl flex items-center justify-center border border-gray-200 group-hover:border-blue-300 transition-colors">
-  {item.imageUrl ? (
-    <img 
-      src={item.imageUrl} 
-      alt={item.name}
-      className="w-full h-full object-cover rounded-xl"
-    />
-  ) : (
-    <>
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-xl"></div>
-      <svg className="w-14 h-14 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-      </svg>
-    </>
-  )}
-
-</div>
-
-                {/* Product Details */}
-                <div className="flex-1">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">{item.name}</h3>
-                      <p className="text-gray-600 text-sm">Pharmaceutical Grade • HPLC Verified ≥99%</p>
-                    </div>
-                    <button 
-                      onClick={() => removeItem(item.id)}
-                      className="text-gray-400 hover:text-red-600 transition-colors p-2"
-                      aria-label="Remove item"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
+                <div className="flex gap-6">
+                  {/* Product Image - FIXED */}
+                  <div className="relative w-24 h-24 flex-shrink-0 bg-gray-50 rounded-lg border border-gray-200 p-2">
+                    {item.imageUrl ? (
+                      <img 
+                        src={item.imageUrl} 
+                        alt={item.name}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ShoppingCart className="h-10 w-10 text-gray-300" />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2">
+                  {/* Product Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">{item.name}</h3>
+                        <p className="text-sm text-gray-500">Pharmaceutical Grade • HPLC Verified ≥99%</p>
+                        
+                        {/* Stock Status */}
+                        <div className="flex items-center gap-2 mt-2">
+                          <CheckCircle className="h-4 w-4 text-emerald-500" />
+                          <span className="text-sm text-emerald-600 font-medium">In Stock</span>
+                        </div>
+                      </div>
+                      
+                      {/* Remove Button */}
+                      <button 
+                        onClick={() => removeItem(item.id)}
+                        className="text-gray-400 hover:text-red-600 transition-colors p-2 -mr-2"
+                        aria-label="Remove item"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-4">
+                      {/* Quantity Controls */}
+                      <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
                         <button 
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="p-1 hover:bg-white rounded-lg transition-colors"
-                          aria-label="Decrease quantity"
+                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                          className="p-1 hover:bg-white rounded transition-colors"
+                          disabled={item.quantity <= 1}
                         >
                           <Minus className="h-4 w-4 text-gray-700" />
                         </button>
-                        <span className="font-bold text-gray-900 w-8 text-center">{item.quantity}</span>
+                        <span className="font-semibold text-gray-900 w-8 text-center">{item.quantity}</span>
                         <button 
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="p-1 hover:bg-white rounded-lg transition-colors"
-                          aria-label="Increase quantity"
+                          className="p-1 hover:bg-white rounded transition-colors"
                         >
                           <Plus className="h-4 w-4 text-gray-700" />
                         </button>
                       </div>
-                      
-                      <div className="text-gray-600">
-                      <span className="font-medium">${(item.price || 0).toFixed(2)}</span>
-  <span className="text-sm"> / unit</span>
-</div>
-                    </div>
 
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900 mb-1">
-  ${((item.price || 0) * item.quantity).toFixed(2)}
-</div>
-                      <button 
-                        onClick={() => removeItem(item.id)}
-                        className="text-sm text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        Remove from cart
-                      </button>
+                      {/* Price */}
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-gray-900">
+                          ${((item.price || 0) * item.quantity).toFixed(2)}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          ${(item.price || 0).toFixed(2)} each
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             ))}
 
-            {/* Clear Cart Button */}
-            <div className="flex justify-end pt-4">
-              <button 
-                onClick={clearCart}
-                className="flex items-center gap-2 px-6 py-3 text-red-600 hover:text-red-800 font-medium hover:bg-red-50 rounded-xl transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-                Clear Entire Cart
-              </button>
-            </div>
+            {/* Continue Shopping */}
+            <Link 
+              href="/products"
+              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium mt-4"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Continue Shopping
+            </Link>
           </div>
           
-          {/* Order Summary - Right Column (Sticky) */}
+          {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8">
-              <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
-                <h2 className="text-2xl font-bold text-gray-900 mb-8 pb-4 border-b">
-                  Study Summary
-                </h2>
+            <div className="sticky top-8 space-y-6">
+              {/* Summary Card */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
                 
-                <div className="space-y-6 mb-8">
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="text-xl font-bold text-gray-900">${total.toFixed(2)}</span>
+                {/* Discount Code */}
+                <div className="mb-6">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Discount Code</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value)}
+                      placeholder="Enter code"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={applyDiscount}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium"
+                    >
+                      Apply
+                    </button>
                   </div>
-                  
-             
-                 <div className="flex justify-between items-center py-2 border-t border-gray-200 pt-4">
-  		<span className="text-gray-600">Priority Shipping</span>
-  		<span className="font-semibold">$50.00</span> {/* Changed */}
-		</div>
-              
-                  <div className="border-t border-gray-200 pt-6">
-
-
-		<div className="flex justify-between items-center">
-  		<span className="text-2xl font-bold text-gray-900">Total</span>
-  		<div>
-    		<div className="text-3xl font-bold text-gray-900">${cartTotal.toFixed(2)}</div>
-   		 <p className="text-sm text-gray-500 text-right">VAT calculated at checkout</p>
-  		</div>
-		</div>
-                  </div>
-                </div>
-
-                {/* Trust Badges */}
-                <div className="mb-8">
-                  <div className="flex items-center justify-center gap-6 mb-6">
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-2">
-                        <Shield className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <span className="text-xs text-gray-600">GMP Grade</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-2">
-                        <Lock className="h-5 w-5 text-green-600" />
-                      </div>
-                      <span className="text-xs text-gray-600">Secure</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mb-2">
-                        <Truck className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <span className="text-xs text-gray-600">Fast Shipping</span>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center mb-6">
-                    <p className="text-sm text-gray-500">
-                      🔒 256-bit SSL encrypted checkout
+                  {appliedDiscount > 0 && (
+                    <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
+                      <CheckCircle className="h-4 w-4" />
+                      Discount applied!
                     </p>
+                  )}
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span className="font-semibold">${subtotal.toFixed(2)}</span>
+                  </div>
+                  
+                  {appliedDiscount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount</span>
+                      <span className="font-semibold">-${appliedDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between text-gray-600">
+                    <span>Shipping</span>
+                    <span className="font-semibold">${shippingFee.toFixed(2)}</span>
+                  </div>
+                  <p className="text-xs text-gray-500">Estimated delivery: 2-3 business days</p>
+                </div>
+
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-lg font-bold text-gray-900">Total</span>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-900">${cartTotal.toFixed(2)}</div>
+                    <p className="text-xs text-gray-500">VAT calculated at checkout</p>
                   </div>
                 </div>
 
-                {/* CTA Buttons */}
+                {/* Checkout Buttons */}
                 {isAuthenticated ? (
                   <Link 
                     href="/checkout"
-                    className="block w-full bg-gradient-to-r from-green-600 to-emerald-700 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-800 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 text-center mb-6"
+                    className="block w-full bg-green-600 text-white py-3 rounded-xl font-semibold text-center hover:bg-green-700 transition-colors mb-3"
                   >
-                    Proceed to Secure Checkout
+                    Proceed to Checkout
                   </Link>
                 ) : (
-                  <div className="space-y-4 mb-6">
+                  <>
                     <Link 
                       href="/checkout"
-                      className="block w-full bg-gradient-to-r from-green-600 to-emerald-700 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-800 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 text-center"
+                      className="block w-full bg-green-600 text-white py-3 rounded-xl font-semibold text-center hover:bg-green-700 transition-colors mb-3"
                     >
                       Checkout as Guest
                     </Link>
                     <Link
                       href="/login"
-                      className="block w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all text-center"
+                      className="block w-full bg-blue-600 text-white py-3 rounded-xl font-semibold text-center hover:bg-blue-700 transition-colors"
                     >
                       Login for Faster Checkout
                     </Link>
-                  </div>
+                  </>
                 )}
 
-                {/* Continue Shopping */}
-                <div className="text-center">
-                  <Link 
-                    href="/products"
-                    className="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                    </svg>
-                    Continue Research Selection
-                  </Link>
+                {/* Trust Badges */}
+                <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
+                  <div className="text-center">
+                    <Shield className="h-6 w-6 text-blue-600 mx-auto mb-1" />
+                    <span className="text-xs text-gray-600">GMP Grade</span>
+                  </div>
+                  <div className="text-center">
+                    <Lock className="h-6 w-6 text-green-600 mx-auto mb-1" />
+                    <span className="text-xs text-gray-600">Secure</span>
+                  </div>
+                  <div className="text-center">
+                    <Truck className="h-6 w-6 text-purple-600 mx-auto mb-1" />
+                    <span className="text-xs text-gray-600">Fast Shipping</span>
+                  </div>
                 </div>
 
-                {/* Legal Disclaimer */}
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <p className="text-xs text-gray-500 text-center leading-relaxed">
-                    *All products are for research use only in laboratory settings. 
-                    Not for human or veterinary diagnostic or therapeutic use. 
-                    By proceeding, you confirm you are a qualified researcher 
-                    and agree to our Terms of Service.
-                  </p>
-                </div>
+                {/* Legal */}
+                <p className="text-xs text-gray-500 text-center mt-6 leading-relaxed">
+                  *For research use only. Not for human or veterinary use.
+                </p>
               </div>
+
+              {/* Clear Cart */}
+              <button 
+                onClick={clearCart}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl font-medium transition-colors border border-red-200"
+              >
+                <Trash2 className="h-4 w-4" />
+                Clear Cart
+              </button>
             </div>
           </div>
         </div>

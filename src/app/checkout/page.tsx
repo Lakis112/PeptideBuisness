@@ -1,19 +1,30 @@
 'use client';
 
-import { CreditCard, Lock, Shield, Truck, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Bitcoin, Lock, Shield, Truck, FileText, CheckCircle, AlertCircle, Copy, ExternalLink } from 'lucide-react';
 import { useCart } from '@/lib/cart';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import QRCode from 'qrcode';
 
 type CheckoutStep = 'shipping' | 'payment' | 'review';
+type Cryptocurrency = 'BTC' | 'ETH' | 'USDT' | 'USDC';
+
+// Your crypto wallet addresses (REPLACE WITH YOUR ACTUAL ADDRESSES)
+const WALLET_ADDRESSES = {
+  BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  ETH: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+  USDT: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb', // ERC-20
+  USDC: '0x87F5c67887dF3af0C748E81A1917f83432863B0e'  // ERC-20
+};
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('shipping');
   const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -29,29 +40,102 @@ export default function CheckoutPage() {
     notes: ''
   });
   
-  const [paymentMethod, setPaymentMethod] = useState('credit_card');
+  const [selectedCrypto, setSelectedCrypto] = useState<Cryptocurrency>('BTC');
+  const [txid, setTxid] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [verificationResult, setVerificationResult] = useState<{
+    status: 'success' | 'error' | null;
+    message: string;
+  }>({ status: null, message: '' });
+
+  const shippingFee = 50;
+  const orderTotal = total + shippingFee;
+
+  // Generate QR code when crypto is selected
+  useEffect(() => {
+    const generateQR = async () => {
+      try {
+        const address = WALLET_ADDRESSES[selectedCrypto];
+        const qr = await QRCode.toDataURL(address, {
+          width: 200,
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#ffffff',
+          },
+        });
+        setQrCodeUrl(qr);
+      } catch (err) {
+        console.error('QR generation failed:', err);
+      }
+    };
+    
+    if (currentStep === 'review') {
+      generateQR();
+    }
+  }, [selectedCrypto, currentStep]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCheckout = async () => {
-    if (!formData.email || !formData.firstName || !formData.address) {
-      toast.error('Please fill in all required shipping information');
-      return;
-    }
-    
-    if (!agreeToTerms) {
-      toast.error('You must agree to the terms and conditions');
-      return;
-    }
-    localStorage.setItem('lastOrderEmail', formData.email);
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard!');
+  };
 
+  const verifyPayment = async () => {
+    if (!txid.trim()) {
+      toast.error('Please enter a transaction ID');
+      return;
+    }
+
+    setVerifying(true);
+    setVerificationResult({ status: null, message: '' });
+
+    try {
+      const response = await fetch('/api/crypto/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          txid: txid.trim(),
+          cryptocurrency: selectedCrypto,
+          expectedAmount: orderTotal,
+          walletAddress: WALLET_ADDRESSES[selectedCrypto]
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.verified) {
+        setVerificationResult({
+          status: 'success',
+          message: 'Payment verified successfully!'
+        });
+        
+        // Create the order
+        await createOrder(txid);
+      } else {
+        setVerificationResult({
+          status: 'error',
+          message: result.message || 'Transaction not found or amount insufficient'
+        });
+      }
+    } catch (error) {
+      setVerificationResult({
+        status: 'error',
+        message: 'Verification failed. Please try again or contact support.'
+      });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const createOrder = async (transactionId: string) => {
     setLoading(true);
 
-    localStorage.setItem('lastOrderEmail', formData.email);  
     try {
       const orderData = {
         cartItems: items,
@@ -65,44 +149,50 @@ export default function CheckoutPage() {
           postalCode: formData.postalCode,
           phone: formData.phone
         },
+        paymentMethod: 'crypto',
+        cryptocurrency: selectedCrypto,
+        transactionId: transactionId,
         shippingMethod: 'standard',
         notes: formData.notes
       };
 
       const response = await fetch('/api/orders', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData)
       });
 
       const result = await response.json();
       
       if (response.ok) {
-        toast.success(`Order confirmed! Order #${result.order.orderNumber}. Confirmation sent to ${formData.email}`);
+        toast.success(`Order confirmed! Order #${result.order.orderNumber}`);
         clearCart();
         router.push(`/order-success?order=${result.order.orderNumber}`);
       } else {
-        toast.error('Order Failed', {
-        description: result.error || 'There was an issue with your order.',
-        duration: 5000,
-});
+        toast.error('Order failed: ' + (result.error || 'Unknown error'));
       }
-      
     } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error('Payment Processing Failed', {
-      description: 'Please try again or contact support.',
-      duration: 5000,
-});
+      console.error('Order creation error:', error);
+      toast.error('Failed to create order. Please contact support with your transaction ID.');
     } finally {
       setLoading(false);
     }
   };
 
+  const getCryptoAmount = () => {
+    // Mock conversion rates - In production, fetch from CoinGecko API
+    const rates = {
+      BTC: 0.0000145, // $69,000 per BTC
+      ETH: 0.000232,   // $4,300 per ETH
+      USDT: 1.0,       // $1 per USDT
+      USDC: 1.0        // $1 per USDC
+    };
+    
+    return (orderTotal * rates[selectedCrypto]).toFixed(8);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         
         {/* Step Indicator */}
@@ -144,10 +234,10 @@ export default function CheckoutPage() {
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
             <Lock className="h-10 w-10 text-green-600" />
-            Secure Checkout
+            Secure Crypto Checkout
           </h1>
           <p className="text-gray-600 text-lg">
-            Complete your research material order with confidence
+            Pay with cryptocurrency for instant, secure transactions
           </p>
         </div>
 
@@ -197,21 +287,6 @@ export default function CheckoutPage() {
                   
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Research Institution / Organization *
-                    </label>
-                    <input
-                      type="text"
-                      name="organization"
-                      value={formData.organization}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                      placeholder="University Research Laboratory"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Email Address *
                     </label>
                     <input
@@ -220,7 +295,22 @@ export default function CheckoutPage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       className="w-full border border-gray-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                      placeholder="your@email.com"
+                      placeholder="researcher@university.edu"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Organization / Institution *
+                    </label>
+                    <input
+                      type="text"
+                      name="organization"
+                      value={formData.organization}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                      placeholder="University Research Lab"
                       required
                     />
                   </div>
@@ -315,7 +405,7 @@ export default function CheckoutPage() {
                 <div className="mt-8 pt-6 border-t border-gray-200">
                   <button
                     onClick={() => setCurrentStep('payment')}
-                    className="w-full bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-800 hover:to-indigo-900 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5"
+                    className="w-full bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-800 hover:to-indigo-900 transition-all shadow-xl"
                   >
                     Continue to Payment
                   </button>
@@ -323,228 +413,270 @@ export default function CheckoutPage() {
               </div>
             )}
             
-            {/* Payment Information */}
+            {/* Payment Method - Crypto Selection */}
             {currentStep === 'payment' && (
               <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-                  <CreditCard className="h-6 w-6 text-purple-600" />
-                  Payment Method
+                  <Bitcoin className="h-6 w-6 text-orange-500" />
+                  Choose Cryptocurrency
                 </h2>
-                <p className="text-gray-600 mb-8">Select your preferred payment method</p>
+                <p className="text-gray-600 mb-8">Select your preferred cryptocurrency for payment</p>
                 
-                <div className="space-y-6">
-                  {/* Payment Method Selection */}
-                  <div className="grid md:grid-cols-2 gap-4 mb-6">
-                    {['credit_card', 'bank_transfer', 'purchase_order'].map((method) => (
-                      <button
-                        key={method}
-                        onClick={() => setPaymentMethod(method)}
-                        className={`p-6 border-2 rounded-xl text-left transition-all ${
-                          paymentMethod === method
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="font-semibold text-gray-900">
-                            {method === 'credit_card' && 'Credit Card'}
-                            {method === 'bank_transfer' && 'Bank Transfer'}
-                            {method === 'purchase_order' && 'Purchase Order'}
+                <div className="grid md:grid-cols-2 gap-4 mb-8">
+                  {(['BTC', 'ETH', 'USDT', 'USDC'] as Cryptocurrency[]).map((crypto) => (
+                    <button
+                      key={crypto}
+                      onClick={() => setSelectedCrypto(crypto)}
+                      className={`p-6 border-2 rounded-xl text-left transition-all ${
+                        selectedCrypto === crypto
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            crypto === 'BTC' ? 'bg-orange-100' :
+                            crypto === 'ETH' ? 'bg-purple-100' :
+                            crypto === 'USDT' ? 'bg-green-100' :
+                            'bg-blue-100'
+                          }`}>
+                            <span className="font-bold text-sm">
+                              {crypto === 'BTC' ? '₿' :
+                               crypto === 'ETH' ? 'Ξ' :
+                               crypto === 'USDT' ? '₮' : '$'}
+                            </span>
                           </div>
-                          {paymentMethod === method && (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          )}
+                          <div>
+                            <div className="font-bold text-gray-900">{crypto}</div>
+                            <div className="text-xs text-gray-500">
+                              {crypto === 'BTC' && 'Bitcoin'}
+                              {crypto === 'ETH' && 'Ethereum'}
+                              {crypto === 'USDT' && 'Tether (ERC-20)'}
+                              {crypto === 'USDC' && 'USD Coin (ERC-20)'}
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {method === 'credit_card' && 'Secure instant payment'}
-                          {method === 'bank_transfer' && 'For institutional orders'}
-                          {method === 'purchase_order' && 'For academic institutions'}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                  
-                  {/* Credit Card Form */}
-                  {paymentMethod === 'credit_card' && (
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Card Number
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                          placeholder="4242 4242 4242 4242"
-                          defaultValue="4242 4242 4242 4242"
-                        />
+                        {selectedCrypto === crypto && (
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                        )}
                       </div>
-                      
-                      <div className="grid md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Expiry Date
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full border border-gray-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                            placeholder="MM/YY"
-                            defaultValue="12/34"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            CVC
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full border border-gray-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                            placeholder="123"
-                            defaultValue="123"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Cardholder Name
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full border border-gray-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                            placeholder="John Smith"
-                            defaultValue="John Smith"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Terms Agreement */}
-                  <div className="border-t border-gray-200 pt-6">
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        id="terms"
-                        checked={agreeToTerms}
-                        onChange={(e) => setAgreeToTerms(e.target.checked)}
-                        className="mt-1 h-5 w-5 text-blue-600 rounded"
-                      />
-                      <label htmlFor="terms" className="text-sm text-gray-700">
-                        I confirm that I am a qualified researcher and understand that all products are for 
-                        <span className="font-semibold"> research use only in laboratory settings</span>. 
-                        I agree to the Terms of Service and confirm this material will not be used for human or 
-                        veterinary diagnostic or therapeutic purposes.
-                      </label>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-4 pt-4">
-                    <button
-                      onClick={() => setCurrentStep('shipping')}
-                      className="flex-1 border-2 border-gray-300 text-gray-700 py-4 rounded-xl font-semibold hover:border-gray-400 transition"
-                    >
-                      Back to Shipping
                     </button>
-                    <button
-                      onClick={() => setCurrentStep('review')}
-                      className="flex-1 bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-800 hover:to-indigo-900 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5"
-                    >
-                      Review Order
-                    </button>
+                  ))}
+                </div>
+                
+                {/* Terms Agreement */}
+                <div className="border-t border-gray-200 pt-6 mb-6">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="terms"
+                      checked={agreeToTerms}
+                      onChange={(e) => setAgreeToTerms(e.target.checked)}
+                      className="mt-1 h-5 w-5 text-blue-600 rounded"
+                    />
+                    <label htmlFor="terms" className="text-sm text-gray-700">
+                      I confirm that I am a qualified researcher and understand that all products are for 
+                      <span className="font-semibold"> research use only in laboratory settings</span>. 
+                      I agree to the Terms of Service and confirm this material will not be used for human or 
+                      veterinary diagnostic or therapeutic purposes.
+                    </label>
                   </div>
+                </div>
+                
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setCurrentStep('shipping')}
+                    className="flex-1 border-2 border-gray-300 text-gray-700 py-4 rounded-xl font-semibold hover:border-gray-400 transition"
+                  >
+                    Back to Shipping
+                  </button>
+                  <button
+                    onClick={() => setCurrentStep('review')}
+                    disabled={!agreeToTerms}
+                    className="flex-1 bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-800 hover:to-indigo-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl"
+                  >
+                    Review Order
+                  </button>
                 </div>
               </div>
             )}
             
             {/* Review Order */}
             {currentStep === 'review' && (
-              <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-                  <FileText className="h-6 w-6 text-green-600" />
-                  Review Your Order
-                </h2>
-                <p className="text-gray-600 mb-8">Confirm all details before submission</p>
-                
-                {/* Order Summary */}
-                <div className="space-y-6 mb-8">
-                  <div className="border border-gray-200 rounded-xl p-6">
-                    <h3 className="font-bold text-lg mb-4">Research Materials</h3>
-                    {items.map((item) => (
-                      <div key={item.id} className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
-                        <div>
-                          <div className="font-medium">{item.name}</div>
-                          <div className="text-sm text-gray-600">Qty: {item.quantity} × ${item.price.toFixed(2)}</div>
-                        </div>
-                        <div className="font-bold">${(item.price * item.quantity).toFixed(2)}</div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Shipping Info */}
-                  <div className="border border-gray-200 rounded-xl p-6">
-                    <h3 className="font-bold text-lg mb-4">Shipping Information</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-6">
+                {/* Research Materials */}
+                <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
+                  <h3 className="text-xl font-bold mb-4">Research Materials</h3>
+                  {items.map((item) => (
+                    <div key={item.id} className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
                       <div>
-                        <div className="text-sm text-gray-600">Name</div>
-                        <div className="font-medium">{formData.firstName} {formData.lastName}</div>
+                        <div className="font-medium">{item.name}</div>
+                        <div className="text-sm text-gray-600">Qty: {item.quantity} × ${item.price.toFixed(2)}</div>
                       </div>
-                      <div>
-                        <div className="text-sm text-gray-600">Organization</div>
-                        <div className="font-medium">{formData.organization}</div>
-                      </div>
-                      <div className="md:col-span-2">
-                        <div className="text-sm text-gray-600">Email</div>
-                        <div className="font-medium">{formData.email}</div>
-                      </div>
-                      <div className="md:col-span-2">
-                        <div className="text-sm text-gray-600">Address</div>
-                        <div className="font-medium">{formData.address}, {formData.city}, {formData.country}</div>
-                      </div>
-                      {formData.phone && (
-                        <div>
-                          <div className="text-sm text-gray-600">Phone</div>
-                          <div className="font-medium">{formData.phone}</div>
-                        </div>
-                      )}
+                      <div className="font-bold">${(item.price * item.quantity).toFixed(2)}</div>
                     </div>
-                  </div>
-                  
-                  {/* Payment Info */}
-                  <div className="border border-gray-200 rounded-xl p-6">
-                    <h3 className="font-bold text-lg mb-4">Payment Method</h3>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">
-                          {paymentMethod === 'credit_card' && 'Credit Card (ending in 4242)'}
-                          {paymentMethod === 'bank_transfer' && 'Bank Transfer'}
-                          {paymentMethod === 'purchase_order' && 'Purchase Order'}
-                        </div>
-                        <div className="text-sm text-gray-600">Billing address same as shipping</div>
-                      </div>
-                      <div className="text-blue-600 font-semibold">Secure</div>
+                  ))}
+                </div>
+                
+                {/* Shipping Info */}
+                <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
+                  <h3 className="text-xl font-bold mb-4">Shipping Information</h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm text-gray-600">Name</div>
+                      <div className="font-medium">{formData.firstName} {formData.lastName}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Organization</div>
+                      <div className="font-medium">{formData.organization}</div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <div className="text-sm text-gray-600">Email</div>
+                      <div className="font-medium">{formData.email}</div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <div className="text-sm text-gray-600">Address</div>
+                      <div className="font-medium">{formData.address}, {formData.city}, {formData.country}</div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => setCurrentStep('payment')}
-                    className="flex-1 border-2 border-gray-300 text-gray-700 py-4 rounded-xl font-semibold hover:border-gray-400 transition"
-                  >
-                    Back to Payment
-                  </button>
-                  <button
-                    onClick={handleCheckout}
-                    disabled={loading || !agreeToTerms}
-                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5"
-                  >
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        Processing Order...
-                      </span>
-                    ) : (
-                      `Complete Order - $${(total + 50).toFixed(2)}`
+                {/* Payment Instructions */}
+                <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                    <FileText className="h-6 w-6 text-green-600" />
+                    Payment Details
+                  </h2>
+                  <p className="text-gray-600 mb-6">Send the exact amount to complete your order</p>
+                  
+                  {/* Payment Amount */}
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
+                    <div className="text-center mb-4">
+                      <div className="text-sm text-gray-600 mb-2">Amount to Send</div>
+                      <div className="text-3xl font-bold text-gray-900 mb-1">
+                        {getCryptoAmount()} {selectedCrypto}
+                      </div>
+                      <div className="text-sm text-gray-500">≈ ${orderTotal.toFixed(2)} USD</div>
+                    </div>
+                    
+                    {/* Wallet Address */}
+                    <div className="mb-4">
+                      <div className="text-sm font-semibold text-gray-700 mb-2">Send to this address:</div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={WALLET_ADDRESSES[selectedCrypto]}
+                          readOnly
+                          className="flex-1 p-3 bg-white border border-gray-300 rounded-lg font-mono text-sm"
+                        />
+                        <button
+                          onClick={() => copyToClipboard(WALLET_ADDRESSES[selectedCrypto])}
+                          className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                        >
+                          <Copy className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* QR Code */}
+                    {qrCodeUrl && (
+                      <div className="text-center">
+                        <div className="inline-block p-4 bg-white rounded-xl border-2 border-gray-200">
+                          <img src={qrCodeUrl} alt="Payment QR Code" className="w-48 h-48" />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">Scan with your crypto wallet</p>
+                      </div>
                     )}
-                  </button>
+                  </div>
+                  
+                  {/* Warning */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <div className="flex gap-3">
+                      <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-amber-800">
+                        <p className="font-semibold mb-1">Important:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>Send the <strong>exact amount</strong> shown above</li>
+                          <li>Use the correct network ({selectedCrypto === 'USDT' || selectedCrypto === 'USDC' ? 'Ethereum (ERC-20)' : selectedCrypto})</li>
+                          <li>Wait for blockchain confirmation (usually 10-60 minutes)</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* TXID Submission */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Transaction ID (TXID) *
+                    </label>
+                    <input
+                      type="text"
+                      value={txid}
+                      onChange={(e) => setTxid(e.target.value)}
+                      placeholder="Enter your transaction hash after payment..."
+                      className="w-full border border-gray-300 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-mono text-sm"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Find this in your wallet after sending the payment
+                    </p>
+                  </div>
+                  
+                  {/* Verification Result */}
+                  {verificationResult.status && (
+                    <div className={`p-4 rounded-xl mb-6 ${
+                      verificationResult.status === 'success' 
+                        ? 'bg-green-50 border border-green-200' 
+                        : 'bg-red-50 border border-red-200'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        {verificationResult.status === 'success' ? (
+                          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        )}
+                        <div className={verificationResult.status === 'success' ? 'text-green-800' : 'text-red-800'}>
+                          <p className="font-semibold">{verificationResult.message}</p>
+                          {verificationResult.status === 'error' && (
+                            <p className="text-sm mt-1">
+                              Please check your transaction ID and try again, or contact support.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setCurrentStep('payment')}
+                      className="flex-1 border-2 border-gray-300 text-gray-700 py-4 rounded-xl font-semibold hover:border-gray-400 transition"
+                    >
+                      Back to Payment
+                    </button>
+                    <button
+                      onClick={verifyPayment}
+                      disabled={verifying || loading || !txid.trim() || verificationResult.status === 'success'}
+                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl"
+                    >
+                      {verifying ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          Verifying...
+                        </span>
+                      ) : loading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          Creating Order...
+                        </span>
+                      ) : verificationResult.status === 'success' ? (
+                        'Payment Verified ✓'
+                      ) : (
+                        'Verify Payment'
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -573,11 +705,37 @@ export default function CheckoutPage() {
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
                       <div>
-                        <div className="text-2xl">${(total + 50).toFixed(2)}</div>
+                        <div className="text-2xl">${orderTotal.toFixed(2)}</div>
                         <p className="text-sm text-gray-500 font-normal">Includes $50.00 shipping</p>
                       </div>
                     </div>
                   </div>
+                  
+                  {currentStep === 'review' && (
+                    <div className="border-t border-gray-200 pt-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Pay with</span>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            selectedCrypto === 'BTC' ? 'bg-orange-100' :
+                            selectedCrypto === 'ETH' ? 'bg-purple-100' :
+                            selectedCrypto === 'USDT' ? 'bg-green-100' :
+                            'bg-blue-100'
+                          }`}>
+                            <span className="text-sm font-bold">
+                              {selectedCrypto === 'BTC' ? '₿' :
+                               selectedCrypto === 'ETH' ? 'Ξ' :
+                               selectedCrypto === 'USDT' ? '₮' : '$'}
+                            </span>
+                          </div>
+                          <span className="font-semibold">{selectedCrypto}</span>
+                        </div>
+                      </div>
+                      <div className="text-right text-sm text-gray-500 mt-1">
+                        ≈ {getCryptoAmount()} {selectedCrypto}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Trust Badges */}
@@ -589,11 +747,15 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex flex-col items-center">
                       <Lock className="h-8 w-8 text-green-600 mb-1" />
-                      <span className="text-xs text-gray-600">256-bit SSL</span>
+                      <span className="text-xs text-gray-600">Secure</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <Bitcoin className="h-8 w-8 text-orange-500 mb-1" />
+                      <span className="text-xs text-gray-600">Crypto</span>
                     </div>
                   </div>
                   <p className="text-center text-sm text-gray-500">
-                    Your payment is secure and encrypted
+                    Blockchain-verified payment
                   </p>
                 </div>
               </div>
@@ -602,7 +764,7 @@ export default function CheckoutPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
                 <h3 className="font-bold text-lg text-blue-900 mb-3">Need Assistance?</h3>
                 <p className="text-blue-700 text-sm mb-4">
-                  Our scientific support team is available for research protocol questions.
+                  Our support team can help with crypto payment issues.
                 </p>
                 <div className="space-y-3">
                   <a href="mailto:support@mmn-pharma.com" className="block text-blue-600 hover:text-blue-800 text-sm font-medium">
